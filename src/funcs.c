@@ -54,7 +54,14 @@ bool load() {
     return true;
 }
 
-int main(int argc, char** argv) {
+void quit() {
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+
+
+void start() {
     
     if(!init()) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
@@ -98,7 +105,4 @@ int main(int argc, char** argv) {
         SDL_RaiseWindow(window);
         SDL_Delay(10);
     }
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 0;
 }

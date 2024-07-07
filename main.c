@@ -40,12 +40,12 @@ bool init() {
 };
 
 bool load() {
-    flower = IMG_Load("cross.png");
+    flower = IMG_Load("cross1.png");
     if (!flower) {
         fprintf(stderr, "ERROR:%s", IMG_GetError());
         return false;
     }
-    flower = SDL_ConvertSurface(flower, surface->format, NULL);
+    flower = SDL_ConvertSurface(flower, surface->format, 0);
     flower = SDL_ConvertSurfaceFormat(flower,SDL_PIXELFORMAT_ARGB8888, 0);
     if (!flower) {
         fprintf(stderr, "ERROR: cant convert. %s", IMG_GetError());
@@ -74,7 +74,8 @@ int main(int argc, char** argv) {
         rect.w = 200;
         rect.x = (width/2) - (rect.w/2);
         rect.y = (height/2) - (rect.h/2);
-        // SDL_BlitScaled(flower, NULL, surface, &rect);
+        SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format,255,255,255));
+        SDL_BlitScaled(flower, NULL, surface, &rect);
 
         SDL_Event eve;
             while (SDL_PollEvent(&eve)) {
@@ -89,9 +90,9 @@ int main(int argc, char** argv) {
             }
         }
 
-        SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-        SDL_RenderClear(render);
-        SDL_RenderPresent(render); //segfault(
+        // SDL_SetRenderDrawColor(render, 255, 255,255, 255);
+        // SDL_RenderClear(render);
+        // SDL_RenderPresent(render); //segfault(
 
         SDL_UpdateWindowSurface(window);
         SDL_RaiseWindow(window);

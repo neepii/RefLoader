@@ -1,17 +1,19 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "bs",
             "includePath": [
-                "C:\\MinGW\\include\\**"
+                "C:\\MinGW\\include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:/MinGW/bin/gcc.exe",
-            "compilerArgs": []
+            "compilerPath": "C:\\MinGW\\bin\\gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x64"
         }
     ],
     "version": 4

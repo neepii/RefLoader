@@ -1,5 +1,5 @@
 FLAGS := -Wall -I/usr/include/SDL2  
-all: clean main.o
+all: main.o
 	gcc $(FLAGS) -o exec main.o -lSDL2 -lSDL2_image
 
 main.o:

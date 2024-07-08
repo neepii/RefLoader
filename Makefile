@@ -1,14 +1,16 @@
-FLAGS := -Wall -I/usr/include/SDL2  
-all: clean main.o funcs.o
-	gcc $(FLAGS) -o exec main.o funcs.o -lSDL2 -lSDL2_image
+FLAGS := -Wall
+LIB := -IC:/msys64/mingw64/include/SDL2 -Dmain=SDL_main -LC:/msys64/mingw64/lib -lmingw32 -mwindows -lSDL2main -lSDL2 -lSDL2_image
+
+all: main.o funcs.o
+	gcc ${FLAGS} -o exec main.o funcs.o ${LIB}
 
 main.o:
-	gcc $(FLAGS) -c src/main.c -lSDL2 -lSDL2_image
+	gcc ${FLAGS} -c src/main.c ${LIB}
 
 funcs.o:
-	gcc $(FLAGS) -c src/funcs.c -lSDL2 -lSDL2_image
+	gcc ${FLAGS} -c src/funcs.c ${LIB}
 
 
 
 clean:
-	rm -rf main.o exec
+	rm -rf main.o funcs.o exec

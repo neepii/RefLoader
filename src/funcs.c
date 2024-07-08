@@ -24,7 +24,7 @@ bool init() {
         return false;
     }
     window = SDL_CreateWindow("cross", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
-    render = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    render = SDL_CreateRenderer(window, -1,SDL_RENDERER_SOFTWARE);
     
     if (window == NULL) {
         fprintf(stderr, "ERROR: Window is NULL. %s\n", SDL_GetError());
@@ -73,7 +73,6 @@ void start() {
     };
 
     bool loop = true;
-    SDL_SetWindowAlwaysOnTop(window, SDL_TRUE);
     while(loop) {
 
         SDL_Rect rect;

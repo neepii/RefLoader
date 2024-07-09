@@ -15,6 +15,9 @@ bool wMinimized = false;
 const int wW = 200;
 const int wH = 200;
 
+int XShift = 0;
+int YShift = 23;
+
 bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
 bool init() {
@@ -80,7 +83,7 @@ bool MakeWindowTransparent(SDL_Window * window, COLORREF color) {
 
     HWND hwnd = wminfo.info.win.window;
 
-    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
 
     return SetLayeredWindowAttributes(hwnd, color, 0, LWA_COLORKEY);
 
@@ -105,8 +108,8 @@ void start() {
         SDL_Rect rect;
         rect.h = 200;
         rect.w = 200;
-        rect.x = (wW/2) - (rect.w/2);
-        rect.y = (wH/2) - (rect.h/2);
+        rect.x = (wW/2) - (rect.w/2) + XShift;
+        rect.y = (wH/2) - (rect.h/2) + YShift;
 
         SDL_BlitScaled(flower, NULL, surface, &rect);
 

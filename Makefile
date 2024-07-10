@@ -1,21 +1,17 @@
 FLAGS := -Wall
-LIB := -IC:/msys64/mingw64/include/SDL2 -Dmain=main -LC:/msys64/mingw64/lib -lmingw32 -mwindows -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
+SRC := $(shell C:\\msys64\\usr\\bin\\find.exe ./src -name *.c)
+OBJ := $(patsubst ./src/%.c,%.o,$(SRC))
+LIB := -IC:/msys64/mingw64/include/SDL2 -Dmain=main -LC:/msys64/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
+EXEC_NAME := exec
 # -mwindows to disable cmd output
 
-all: clean main.o funcs.o init.o
-	gcc ${FLAGS} -o exec main.o cross.o init.o ${LIB}
+all: $(EXEC_NAME)
 
-main.o:
-	gcc ${FLAGS} -c src/main.c ${LIB}
+$(EXEC_NAME): *.o
+	gcc $(FLAGS) -o $@ $^ $(LIB)
 
-funcs.o:
-	gcc ${FLAGS} -c src/cross.c ${LIB}
-
-init.o:
-	gcc ${FLAGS} -c src/init.c ${LIB}
-
-
-
+%.o: src/%.c
+	gcc $(FLAGS) -c $^ $(LIB)
 
 clean:
-	rm -rf main.o cross.o init.o exec
+	rm -rf $(OBJ) $(EXEC_NAME)

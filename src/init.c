@@ -3,15 +3,23 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_syswm.h>
 #include <windows.h>
+#include <commdlg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+
+#ifndef UNICODE
+#define UNICODE
+#endif
 
 static SDL_Window * mwindow;
 static SDL_Renderer * mrender;
 static SDL_Texture * mtexture;
 static SDL_Surface * msurface;
 
+
+static const SDL_Rect textbox = {25,25,430,30};
+static const SDL_Rect buttondialog = {470,25,30,30};
 static const int mwW = 640;
 static const int mwH = 480;
 
@@ -48,8 +56,16 @@ bool CH_InitSDL() {
 }
 
 static void update(void) {
-    SDL_SetRenderDrawColor(mrender, 235, 235, 235, 235);
+
+
+    SDL_Rect Rects[2] = {textbox, buttondialog};
+
+    SDL_SetRenderDrawColor(mrender, 255, 255, 255, 255);
     SDL_RenderClear(mrender);
+
+    SDL_SetRenderDrawColor(mrender, 205,205,205,255);
+    SDL_RenderDrawRects(mrender,Rects, 2);  
+
     SDL_RenderPresent(mrender);
 }
 
@@ -60,6 +76,7 @@ void CH_Quit() {
 }
 
 bool CH_CreateMenu(char* inpDest) {
+
     int inpLen = 0;
     mwindow = SDL_CreateWindow("Crosshairy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
     mrender = SDL_CreateRenderer(mwindow, -1,SDL_RENDERER_SOFTWARE);
@@ -93,6 +110,28 @@ bool CH_CreateMenu(char* inpDest) {
     SDL_StartTextInput();
     bool done = false;
     bool loop = true;
+
+    
+
+    OPENFILENAMEA dialog;
+    char * titledialog = "OPEN";
+    TCHAR szfile[100] = {0};
+    ZeroMemory(&dialog, sizeof dialog);
+    dialog.lStructSize = sizeof(dialog);
+    dialog.hwndOwner = getHWND(mwindow);
+    dialog.lpstrFile = szfile;
+    dialog.nMaxFile = sizeof(szfile);
+    dialog.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    dialog.nFilterIndex = 1;
+    dialog.lpstrFileTitle = titledialog;
+    dialog.nMaxFileTitle = sizeof(titledialog);
+    dialog.lpstrInitialDir = NULL;
+    dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+
+    // if (GetOpenFileName(&dialog)) {
+
+    // }
+
     while(loop) {
         SDL_Event eve;
         bool inpFlag = false;

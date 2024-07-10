@@ -16,7 +16,7 @@ static const int wW = 400;
 static const int wH = 400;
 
 int XShift = 0;
-int YShift = 23;
+int YShift = 60;
 
 static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 

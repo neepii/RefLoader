@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
 
     CH_InitCross(Destination);
 
+    free(Destination);
     CH_Quit();
 
     return 0;

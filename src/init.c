@@ -35,6 +35,7 @@ HWND getHWND(SDL_Window * window) {
     return wminfo.info.win.window;
 }
 
+
 bool CH_InitSDL() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "ERROR: Init Failed: %s\n", SDL_GetError());
@@ -196,6 +197,7 @@ bool CH_CreateMenu(char* inpDest) {
     } // loop
 
     SDL_StopTextInput();
+    memset(inputtext, 0, strlen(inputtext));
     free(inputtext);
     TTF_CloseFont(font);
     SDL_DestroyTexture(mtexture);

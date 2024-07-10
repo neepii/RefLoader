@@ -77,6 +77,10 @@ static bool MakeWindowTransparent(SDL_Window * window, COLORREF color) { //winap
 
 
 void CH_InitCross(char * path) {
+
+    HWND hwnd = getHWND(window);
+    MSG msg = {0};
+    RegisterHotKey(hwnd, 1, MOD_CONTROL, 0x52);
     
     if(!init()) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
@@ -87,33 +91,46 @@ void CH_InitCross(char * path) {
         CH_Quit();
     };
 
+    SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+    
+    SDL_Rect rect;
+    rect.h = 200;
+    rect.w = 200;
+    rect.x = (wW/2) - (rect.w/2) + XShift;
+    rect.y = (wH/2) - (rect.h/2) + YShift;
+
     bool loop = true;
     while(loop) {
-
-        SDL_Rect rect;
-        rect.h = 200;
-        rect.w = 200;
-        rect.x = (wW/2) - (rect.w/2) + XShift;
-        rect.y = (wH/2) - (rect.h/2) + YShift;
-
         SDL_BlitScaled(crosshair_img, NULL, surface, &rect);
 
         SDL_Event eve;
+
         while (SDL_PollEvent(&eve)) {
+            GetMessage(&msg, hwnd, 0,0);
             switch (eve.type)
             {
             case SDL_QUIT:
-                loop = SDL_FALSE;
+                loop = false;
+                break;
+            case SDL_SYSWMEVENT:
+                if (msg.message == WM_HOTKEY && LOWORD(msg.lParam) == 2) {
+                    printf("%d", LOWORD(msg.lParam));
+                    loop = false;
+                }
                 break;
         
             default:
                 break;
             }
-        }
+            
+        };
+
 
 
         SDL_UpdateWindowSurface(window);
         SDL_Delay(10);
     }
+    SDL_FreeSurface(surface);
+    SDL_DestroyRenderer(render);
     SDL_DestroyWindow(window);
 }

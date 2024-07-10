@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#define TEXT_MAX_SIZE 100
 
 static SDL_Window * mwindow;
 static SDL_Renderer * mrender;
@@ -17,6 +16,7 @@ static const int mwW = 640;
 static const int mwH = 480;
 
 char * inputtext;
+SDL_Rect inpRect;
 
 
 HWND getHWND(SDL_Window * window) {
@@ -47,7 +47,7 @@ bool CH_InitSDL() {
 
 }
 
-void update(void) {
+static void update(void) {
     SDL_SetRenderDrawColor(mrender, 235, 235, 235, 235);
     SDL_RenderClear(mrender);
     SDL_RenderPresent(mrender);
@@ -59,7 +59,8 @@ void CH_Quit() {
     SDL_Quit();
 }
 
-bool CH_CreateMenu() {
+bool CH_CreateMenu(char* inpDest) {
+    int inpLen = 0;
     mwindow = SDL_CreateWindow("Crosshairy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
     mrender = SDL_CreateRenderer(mwindow, -1,SDL_RENDERER_SOFTWARE);
     mtexture = SDL_CreateTextureFromSurface(mrender, msurface);
@@ -69,38 +70,32 @@ bool CH_CreateMenu() {
     };
     msurface = SDL_GetWindowSurface(mwindow);
 
-    update();
-    
-    int padding = 25;
-    SDL_Rect innerwhite = {padding, padding ,mwW-(2* padding), mwH - (2*padding)};
-    // SDL_SetRenderDrawColor(mrender, 245,245,245,245);
-    // SDL_FillRect(msurface, &innerwhite, SDL_MapRGBA(msurface->format,255,255,255,255));
-    // SDL_RenderPresent(mrender);
-
-    SDL_StartTextInput();
-
-    inputtext = (char*) malloc(sizeof(char) * TEXT_MAX_SIZE);
+    inputtext = (char*) malloc(sizeof(char) * 100);
     memset(inputtext, 0, strlen(inputtext));
-    int inpLen = 0;
-    int tempLen;
+
+    SDL_Color black = {0,0,0};
     SDL_Texture * inpTexture= SDL_CreateTextureFromSurface(mrender, msurface);
-    SDL_Rect inpRect = {innerwhite.x,innerwhite.y,innerwhite.w,innerwhite.h-mwH/2};
-    TTF_Font * font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 255);
+    inpRect.x = 25;
+    inpRect.y = 25;
+    inpRect.w = 430;
+    inpRect.h = 30;
+    TTF_Font * font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 20);
     if (font == NULL) {
         fprintf(stderr, "ERROR: %s\n", SDL_GetError());
         return EXIT_FAILURE;
     };
-    SDL_Color black = {0,0,0};
-
     if (!SDL_RenderCopy(mrender, mtexture, NULL, NULL)) {
         fprintf(stderr, "ERROR: %s\n", SDL_GetError());
         return EXIT_FAILURE;
     };
 
+    update();
+    SDL_StartTextInput();
+    bool done = false;
     bool loop = true;
     while(loop) {
         SDL_Event eve;
-        tempLen = inpLen;
+        bool inpFlag = false;
         while(SDL_PollEvent(&eve)) {
             switch (eve.type)
             {
@@ -110,14 +105,25 @@ bool CH_CreateMenu() {
             case SDL_TEXTINPUT:
                 strcat(inputtext, eve.text.text);
                 inpLen++;
+                inpFlag = true;
                 break;
             case SDL_KEYDOWN:
-                if (eve.key.keysym.sym == SDLK_BACKSPACE && inputtext) {
-                    inputtext[strlen(inputtext)-1] = '\0';
+                if (eve.key.keysym.sym == SDLK_BACKSPACE && inpLen > 0) {
+                    inputtext[inpLen-1] = '\0';
                     inpLen--;
+                    inpFlag = true;
                 }
-                if (eve.key.keysym.sym == SDLK_KP_ENTER && inputtext) {
-                    
+                else if (eve.key.keysym.sym == SDLK_RETURN) {
+                    done = true;
+                    inpFlag =true;
+                }
+                else if (eve.key.keysym.sym == SDLK_c && KMOD_CTRL) {
+                    SDL_SetClipboardText(inputtext);
+                    inpFlag = true;
+                }
+                else if (eve.key.keysym.sym == SDLK_v && KMOD_CTRL) {
+                    strcpy(inputtext, SDL_GetClipboardText());
+                    inpFlag = true;
                 }
 
             default:
@@ -125,19 +131,30 @@ bool CH_CreateMenu() {
             }
         }
 
-        if (inputtext && tempLen != inpLen) {
+        if (inputtext && inpFlag) {
+            if (done) {
+                strcpy(inpDest, inputtext);
+                loop = false;
+            } else {
             update();
             SDL_Surface * inpSurf = TTF_RenderText_Blended(font, inputtext, black);
             inpTexture = SDL_CreateTextureFromSurface(mrender,inpSurf);
+            inpRect.w = inpSurf->w;
+            inpRect.h = inpSurf->h;
+
             SDL_RenderCopy(mrender, inpTexture, NULL, &inpRect);
+
             
             SDL_DestroyTexture(inpTexture);
             SDL_FreeSurface(inpSurf);
+            }
+            
         }
 
         SDL_RenderPresent(mrender);
         SDL_Delay(10);
-    }
+
+    } // loop
 
     SDL_StopTextInput();
     free(inputtext);
@@ -145,6 +162,7 @@ bool CH_CreateMenu() {
     SDL_DestroyTexture(mtexture);
     SDL_DestroyWindowSurface(mwindow);
     SDL_DestroyWindow(mwindow);
+
 
     return EXIT_SUCCESS;
 }

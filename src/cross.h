@@ -2,8 +2,7 @@
 #define CROSS_H_
 #include <stdbool.h>
 
-bool initcrosshair();
-bool load();
-void start();
+
+void CH_InitCross();
 
 #endif

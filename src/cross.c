@@ -12,15 +12,15 @@ static SDL_Surface * crosshair_img;
 static SDL_Surface * surface;
 
 
-static const int wW = 200;
-static const int wH = 200;
+static const int wW = 400;
+static const int wH = 400;
 
 int XShift = 0;
 int YShift = 23;
 
 static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
-bool initcrosshair() {
+static bool init() {
 
     window = SDL_CreateWindow("cross", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
     render = SDL_CreateRenderer(window, -1,SDL_RENDERER_SOFTWARE);
@@ -46,8 +46,11 @@ bool initcrosshair() {
 
 };
 
-bool load() {
-    crosshair_img = IMG_Load("res/cross.png");
+static bool load(char * path) {
+    crosshair_img = IMG_Load(path);
+    if (crosshair_img == NULL) {
+        crosshair_img = IMG_Load("res/cross.png"); // default
+    }
     if (!crosshair_img) {
         fprintf(stderr, "ERROR:%s", IMG_GetError());
         return false;
@@ -73,13 +76,13 @@ static bool MakeWindowTransparent(SDL_Window * window, COLORREF color) { //winap
 
 
 
-void start() {
+void CH_InitCross(char * path) {
     
-    if(!initcrosshair()) {
+    if(!init()) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
         CH_Quit();
     };
-    if(!load()) {
+    if(!load(path)) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
         CH_Quit();
     };

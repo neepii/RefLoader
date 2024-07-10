@@ -1,5 +1,5 @@
 FLAGS := -Wall
-LIB := -IC:/msys64/mingw64/include/SDL2 -Dmain=main -LC:/msys64/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
+LIB := -IC:/msys64/mingw64/include/SDL2 -Dmain=main -LC:/msys64/mingw64/lib -lmingw32 -mwindows -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 # -mwindows to disable cmd output
 
 all: clean main.o funcs.o init.o

@@ -4,7 +4,7 @@
 #include <SDL2/sdl.h>
 
 bool CH_InitSDL(void);
-bool CH_CreateMenu(void);
+bool CH_CreateMenu(char* );
 void CH_Quit(void);
 HWND getHWND(SDL_Window* );
 

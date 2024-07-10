@@ -1,10 +1,13 @@
-#include "funcs.h"
+#include "cross.h"
+#include "init.h"
 
-int SDL_main(int argc, char** argv) {
+int main(int argc, char** argv) {
 
-    start();
+    CH_InitSDL();
 
-    quit();
+    CH_CreateMenu();
+
+    CH_Quit();
 
     return 0;
 }

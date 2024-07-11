@@ -18,10 +18,12 @@ static SDL_Texture * mtexture;
 static SDL_Surface * msurface;
 
 
-static const SDL_Rect textbox = {25,25,430,30};
+static const SDL_Rect textbox = {25,25,550,30};
 static const SDL_Rect buttondialog = {470,25,30,30};
 static const int mwW = 640;
 static const int mwH = 480;
+
+int exit_code = 0;
 
 char * inputtext;
 SDL_Rect inpRect;
@@ -141,6 +143,7 @@ bool CH_CreateMenu(char* inpDest) {
             {
             case SDL_QUIT:
                 loop = false;
+                exit_code = 1;
                 break;
             case SDL_TEXTINPUT:
                 strcat(inputtext, eve.text.text);
@@ -205,5 +208,5 @@ bool CH_CreateMenu(char* inpDest) {
     SDL_DestroyWindow(mwindow);
 
 
-    return EXIT_SUCCESS;
+    return exit_code;
 }

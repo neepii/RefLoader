@@ -9,10 +9,9 @@ int main(int argc, char** argv) {
 
     CH_InitSDL();
 
-    CH_CreateMenu(Destination);
-
-    CH_InitCross(Destination);
-
+    if (!CH_CreateMenu(Destination)) {
+        CH_InitCross(Destination);
+    } 
     free(Destination);
     CH_Quit();
 

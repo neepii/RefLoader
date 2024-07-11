@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "init.h"
+#define HOTKEY1 1110
 
 static SDL_Window * window;
 static SDL_Renderer * render;
@@ -16,7 +17,7 @@ static const int wW = 400;
 static const int wH = 400;
 
 int XShift = 0;
-int YShift = 60;
+int YShift = 0;
 
 static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
@@ -46,6 +47,10 @@ static bool init() {
 
 };
 
+static void MakeTray(SDL_Window * window) {
+
+}
+
 static bool load(char * path) {
     crosshair_img = IMG_Load(path);
     if (crosshair_img == NULL) {
@@ -68,7 +73,7 @@ static bool MakeWindowTransparent(SDL_Window * window, COLORREF color) { //winap
 
     HWND hwnd = getHWND(window);
 
-    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE);
 
     return SetLayeredWindowAttributes(hwnd, color, 0, LWA_COLORKEY);
 
@@ -80,7 +85,10 @@ void CH_InitCross(char * path) {
 
     HWND hwnd = getHWND(window);
     MSG msg = {0};
-    RegisterHotKey(hwnd, 1, MOD_CONTROL, 0x52);
+    if (!RegisterHotKey(NULL, HOTKEY1, MOD_CONTROL | MOD_NOREPEAT | MOD_ALT, 0x52)) {
+        fprintf(stderr, "ERROR:%s", SDL_GetError());
+        CH_Quit();
+    }
     
     if(!init()) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
@@ -104,7 +112,6 @@ void CH_InitCross(char * path) {
         SDL_BlitScaled(crosshair_img, NULL, surface, &rect);
 
         SDL_Event eve;
-
         while (SDL_PollEvent(&eve)) {
             GetMessage(&msg, hwnd, 0,0);
             switch (eve.type)
@@ -113,8 +120,7 @@ void CH_InitCross(char * path) {
                 loop = false;
                 break;
             case SDL_SYSWMEVENT:
-                if (msg.message == WM_HOTKEY && LOWORD(msg.lParam) == 2) {
-                    printf("%d", LOWORD(msg.lParam));
+                if (msg.message == WM_HOTKEY && LOWORD(msg.wParam) == HOTKEY1) {
                     loop = false;
                 }
                 break;

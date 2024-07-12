@@ -9,19 +9,36 @@
 
 static SDL_Window * window;
 static SDL_Renderer * render;
-static SDL_Surface * crosshair_img;
+static SDL_Surface * imgsurface;
 static SDL_Surface * surface;
 
 
-static int wW = 400;
-static int wH = 400;
+static int wW;
+static int wH;
 
-int XShift = 0;
-int YShift = 0;
 
 static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
+static void UpdateImage() {
+    SDL_Rect rect;
+    rect.h = imgsurface->h;
+    rect.w = imgsurface->w;
+    rect.x = (wW/2) - (rect.w/2);
+    rect.y = (wH/2) - (rect.h/2);
+    SDL_BlitScaled(imgsurface, NULL, surface, &rect);
+}
+
+static void UpdateImageOnResize() {
+    SDL_SetRenderDrawColor(render,255,255,255,255);
+    SDL_RenderClear(render);
+
+
+    SDL_RenderPresent(render);
+}
+
 static bool init() {
+    
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 
     window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_OPENGL);
     render = SDL_CreateRenderer(window, -1,SDL_RENDERER_SOFTWARE);
@@ -47,27 +64,24 @@ static bool init() {
 
 };
 
-static void MakeTray(SDL_Window * window) {
-
-}
 
 static bool load(char * path) {
-    crosshair_img = IMG_Load(path);
-    if (crosshair_img == NULL) {
-        crosshair_img = IMG_Load("res/cross.png"); // default
+    imgsurface = IMG_Load(path);
+    if (imgsurface == NULL) {
+        imgsurface = IMG_Load("res/cross.png"); // default
     }
-    if (!crosshair_img) {
+    if (!imgsurface) {
         fprintf(stderr, "ERROR:%s", IMG_GetError());
         return false;
     }
-    crosshair_img = SDL_ConvertSurfaceFormat(crosshair_img,SDL_PIXELFORMAT_ARGB8888, 0);
-    if (!crosshair_img) {
+    imgsurface = SDL_ConvertSurfaceFormat(imgsurface,SDL_PIXELFORMAT_ARGB8888, 0);
+    if (!imgsurface) {
         fprintf(stderr, "ERROR: cant convert. %s", IMG_GetError());
         return false;
     }
 
-    wW = crosshair_img->w;
-    wH = crosshair_img->h;
+    wW = imgsurface->w;
+    wH = imgsurface->h;
 
     return true;
 }
@@ -105,15 +119,11 @@ void CH_InitImage(char * path) {
 
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
     
-    SDL_Rect rect;
-    rect.h = 200;
-    rect.w = 200;
-    rect.x = (wW/2) - (rect.w/2) + XShift;
-    rect.y = (wH/2) - (rect.h/2) + YShift;
-
+    UpdateImage();
     bool loop = true;
+    bool holding = false;
     while(loop) {
-        SDL_BlitScaled(crosshair_img, NULL, surface, &rect);
+
 
         SDL_Event eve;
         while (SDL_PollEvent(&eve)) {
@@ -128,12 +138,27 @@ void CH_InitImage(char * path) {
                     loop = false;
                 }
                 break;
+            // case SDL_MOUSEBUTTONDOWN:
+            //     holding = true;
+            //     break;
+            // case SDL_MOUSEBUTTONUP:
+            //     holding = false;
+            //     break;
+            case SDL_WINDOWEVENT:
+                if (eve.window.event == SDL_WINDOWEVENT_RESIZED) {
+                    UpdateImageOnResize();
+                }
+
+                break;
         
             default:
                 break;
             }
             
         };
+        
+        // if(holding){
+        // }
 
 
 

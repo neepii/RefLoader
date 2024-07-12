@@ -58,6 +58,8 @@ bool CH_InitSDL() {
         return EXIT_FAILURE;
     }
 
+    
+
     return EXIT_SUCCESS;
 
 };
@@ -92,7 +94,7 @@ void CH_Quit() {
 bool CH_CreateMenu(char* inpDest) {
 
     inpLen = 0;
-    mwindow = SDL_CreateWindow("Crosshairy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
+    mwindow = SDL_CreateWindow("Ref", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
     mrender = SDL_CreateRenderer(mwindow, -1,SDL_RENDERER_SOFTWARE);
     mtexture = SDL_CreateTextureFromSurface(mrender, msurface);
     if (mwindow == NULL) {
@@ -175,6 +177,9 @@ bool CH_CreateMenu(char* inpDest) {
                             inpFlag = true;
                         }
                 }
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+
                 break;
             case SDL_MOUSEBUTTONUP:
                 int x,y;

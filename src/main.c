@@ -1,4 +1,4 @@
-#include "cross.h"
+#include "image.h"
 #include "init.h"
 
 
@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     CH_InitSDL();
 
     if (!CH_CreateMenu(Destination)) {
-        CH_InitCross(Destination);
+        CH_InitImage(Destination);
     } 
     free(Destination);
     CH_Quit();

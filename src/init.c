@@ -19,8 +19,8 @@ static SDL_Surface * msurface;
 static SDL_Surface * foldersrf;
 
 
-static SDL_Rect textbox = {25,25,500,25};
-static SDL_Rect buttondialog = {550,12,50,50};
+static SDL_Rect textbox = {30,420,580,30};
+static SDL_Rect buttondialog = {133,15,374,374};
 static const int mwW = 640;
 static const int mwH = 480;
 
@@ -72,9 +72,6 @@ static void update(void) {
     SDL_RenderDrawRects(mrender,Rects, 2);
 
 
-    SDL_Surface * tempsrf = IMG_Load("res/folder.png");
-    foldersrf = SDL_ConvertSurface(tempsrf, msurface->format, 0);
-    SDL_FreeSurface(tempsrf);
     foldertex = SDL_CreateTextureFromSurface(mrender, foldersrf);
     SDL_RenderCopy(mrender, foldertex, NULL, &buttondialog);
 
@@ -104,15 +101,18 @@ bool CH_CreateMenu(char* inpDest) {
     };
     msurface = SDL_GetWindowSurface(mwindow);
 
+    SDL_Surface * tempsrf = IMG_Load("res/folder.png");
+    foldersrf = SDL_ConvertSurface(tempsrf, msurface->format, 0);
+    SDL_FreeSurface(tempsrf);
+
     char inputtext[MAX_TEXT_LEN];
     memset(inputtext, 0, strlen(inputtext));
-
     SDL_Color black = {0,0,0};
     SDL_Texture * inpTexture= SDL_CreateTextureFromSurface(mrender, msurface);
-    inpRect.x = 25;
-    inpRect.y = 25;
-    inpRect.w = 430;
-    inpRect.h = 30;
+    inpRect.x = textbox.x;         
+    inpRect.y = textbox.y;
+    inpRect.w = textbox.w;
+    inpRect.h = textbox.h;
     TTF_Font * font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 20);
     if (font == NULL) {
         fprintf(stderr, "ERROR: %s\n", SDL_GetError());
@@ -175,9 +175,10 @@ bool CH_CreateMenu(char* inpDest) {
                             inpFlag = true;
                         }
                 }
-            case SDL_MOUSEBUTTONDOWN:
+                break;
+            case SDL_MOUSEBUTTONUP:
                 int x,y;
-                SDL_GetMouseState(&x, &y);
+                SDL_GetMouseState(&x,&y);
                 if (x >= buttondialog.x &&
                     y >= buttondialog.y &&
                     x <= (buttondialog.w +buttondialog.x) &&
@@ -200,6 +201,7 @@ bool CH_CreateMenu(char* inpDest) {
                             char * path = dialog.lpstrFile;
                             int pathLen = strlen(path);
                             if ((inpLen+pathLen) < MAX_TEXT_LEN) {
+                                memset(inputtext, 0, inpLen);
                                 strncat(inputtext, path, pathLen);
                                 inpLen += pathLen;
                                 inpFlag = true;
@@ -207,6 +209,7 @@ bool CH_CreateMenu(char* inpDest) {
                         }
                         
                     }
+                break;
             default:
                 break;
             }

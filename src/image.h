@@ -3,6 +3,6 @@
 #include <stdbool.h>
 
 
-void CH_InitCross();
+void CH_InitImage(char *);
 
 #endif

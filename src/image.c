@@ -13,8 +13,8 @@ static SDL_Surface * crosshair_img;
 static SDL_Surface * surface;
 
 
-static const int wW = 400;
-static const int wH = 400;
+static int wW = 400;
+static int wH = 400;
 
 int XShift = 0;
 int YShift = 0;
@@ -23,7 +23,7 @@ static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
 static bool init() {
 
-    window = SDL_CreateWindow("cross", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_OPENGL);
     render = SDL_CreateRenderer(window, -1,SDL_RENDERER_SOFTWARE);
     
     if (window == NULL) {
@@ -34,10 +34,10 @@ static bool init() {
     
     surface = SDL_GetWindowSurface(window);
 
-    SDL_SetRenderDrawColor(render, 255, 0, 255, 255);
+    SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
     SDL_RenderClear(render);
 
-    MakeWindowTransparent(window, RGB(255,0,255));
+    //MakeWindowTransparent(window, RGB(255,0,255));
     
     SDL_RenderPresent(render);
 
@@ -65,6 +65,10 @@ static bool load(char * path) {
         fprintf(stderr, "ERROR: cant convert. %s", IMG_GetError());
         return false;
     }
+
+    wW = crosshair_img->w;
+    wH = crosshair_img->h;
+
     return true;
 }
 
@@ -81,7 +85,7 @@ static bool MakeWindowTransparent(SDL_Window * window, COLORREF color) { //winap
 
 
 
-void CH_InitCross(char * path) {
+void CH_InitImage(char * path) {
 
     HWND hwnd = getHWND(window);
     MSG msg = {0};
@@ -90,11 +94,11 @@ void CH_InitCross(char * path) {
         CH_Quit();
     }
     
-    if(!init()) {
+    if (!load(path)) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
         CH_Quit();
     };
-    if(!load(path)) {
+    if (!init()) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
         CH_Quit();
     };

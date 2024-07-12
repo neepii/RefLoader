@@ -9,6 +9,7 @@
 
 static SDL_Window * window;
 static SDL_Renderer * render;
+static SDL_Texture * imgtexture;
 static SDL_Surface * imgsurface;
 static SDL_Surface * surface;
 
@@ -19,46 +20,47 @@ static int wH;
 
 static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
-static void UpdateImage() {
-    SDL_Rect rect;
-    rect.h = imgsurface->h;
-    rect.w = imgsurface->w;
-    rect.x = (wW/2) - (rect.w/2);
-    rect.y = (wH/2) - (rect.h/2);
-    SDL_BlitScaled(imgsurface, NULL, surface, &rect);
-}
 
-static void UpdateImageOnResize() {
-    SDL_SetRenderDrawColor(render,255,255,255,255);
+static void UpdateImage() {
+    SDL_SetRenderDrawColor(render, 255,255,255,255);
     SDL_RenderClear(render);
 
+    SDL_UpdateWindowSurface(window);
+    
+    int w,h;
+    SDL_GetWindowSize(window, &w, &h);
+    SDL_Rect winrect = {0, 0, w, h};
+    // SDL_FillRect(surface, &winrect, SDL_MapRGB(surface->format, 255,255,255));
+    SDL_Rect rect;
 
+    rect.h = imgsurface->h;
+    rect.w = imgsurface->w;
+    rect.x = (winrect.w/2) - (rect.w/2);
+    rect.y = (winrect.h/2) - (rect.h/2);
+    imgtexture = SDL_CreateTextureFromSurface(render, imgsurface);
+    SDL_RenderCopy(render, imgtexture, NULL, &rect);
+    SDL_DestroyTexture(imgtexture);
     SDL_RenderPresent(render);
 }
 
 static bool init() {
-    
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-
-    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_OPENGL);
-    render = SDL_CreateRenderer(window, -1,SDL_RENDERER_SOFTWARE);
+    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
     
     if (window == NULL) {
         fprintf(stderr, "ERROR: Window is NULL. %s\n", SDL_GetError());
         return false;
     }
-    
-    
+    render = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (render == NULL) {
+        fprintf(stderr, "ERROR: Renderer is NULL. %s\n", SDL_GetError());
+        return false;
+    }
     surface = SDL_GetWindowSurface(window);
 
-    SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-    SDL_RenderClear(render);
-
     //MakeWindowTransparent(window, RGB(255,0,255));
-    
-    SDL_RenderPresent(render);
 
     SDL_SetWindowAlwaysOnTop(window, SDL_TRUE);
+    UpdateImage();
 
     return true;
 
@@ -119,9 +121,8 @@ void CH_InitImage(char * path) {
 
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
     
-    UpdateImage();
     bool loop = true;
-    bool holding = false;
+    
     while(loop) {
 
 
@@ -133,11 +134,11 @@ void CH_InitImage(char * path) {
             case SDL_QUIT:
                 loop = false;
                 break;
-            case SDL_SYSWMEVENT:
-                if (msg.message == WM_HOTKEY && LOWORD(msg.wParam) == HOTKEY1) {
-                    loop = false;
-                }
-                break;
+            // case SDL_SYSWMEVENT:
+            //     if (msg.message == WM_HOTKEY && LOWORD(msg.wParam) == HOTKEY1) {
+            //         loop = false;
+            //     }
+            //     break;
             // case SDL_MOUSEBUTTONDOWN:
             //     holding = true;
             //     break;
@@ -146,7 +147,10 @@ void CH_InitImage(char * path) {
             //     break;
             case SDL_WINDOWEVENT:
                 if (eve.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    UpdateImageOnResize();
+                    UpdateImage();
+                } else if (eve.window.event == SDL_WINDOWEVENT_EXPOSED) {
+                    UpdateImage();
+                    SDL_RenderPresent(render);
                 }
 
                 break;
@@ -156,14 +160,9 @@ void CH_InitImage(char * path) {
             }
             
         };
-        
-        // if(holding){
-        // }
 
 
-
-        SDL_UpdateWindowSurface(window);
-        SDL_Delay(10);
+        SDL_Delay(50);
     }
     SDL_FreeSurface(surface);
     SDL_DestroyRenderer(render);

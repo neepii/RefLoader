@@ -18,7 +18,6 @@ static int wW;
 static int wH;
 
 
-static bool MakeWindowTransparent(SDL_Window * window, COLORREF color);
 
 
 static void UpdateImage() {
@@ -57,8 +56,6 @@ static bool init() {
     }
     surface = SDL_GetWindowSurface(window);
 
-    //MakeWindowTransparent(window, RGB(255,0,255));
-
     SDL_SetWindowAlwaysOnTop(window, SDL_TRUE);
     UpdateImage();
 
@@ -87,18 +84,6 @@ static bool load(char * path) {
 
     return true;
 }
-
-
-static bool MakeWindowTransparent(SDL_Window * window, COLORREF color) { //winapi is a cool dude
-
-    HWND hwnd = getHWND(window);
-
-    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE);
-
-    return SetLayeredWindowAttributes(hwnd, color, 0, LWA_COLORKEY);
-
-};
-
 
 
 void CH_InitImage(char * path) {

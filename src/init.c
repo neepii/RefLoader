@@ -8,7 +8,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#define MAX_TEXT_LEN 512
+
+#include "curl.h"
+#include "init.h"
+
 
 
 static SDL_Window * mwindow;
@@ -44,8 +47,6 @@ HWND getHWND(SDL_Window * window) {
 };
 
 static void addChar(char * dest, int pos, char* seed) {
-
-
     char temp[512];
     memset(temp,0,512);
 
@@ -58,12 +59,12 @@ static void addChar(char * dest, int pos, char* seed) {
     strcpy(dest, temp);
 
 }
+
 static int getTextLen(char * text) {
     int w;
     TTF_SizeText(font, text, &w, NULL);
     return w;
 }
-
 
 
 
@@ -116,7 +117,7 @@ void CH_Quit() {
 
 
 
-bool CH_CreateMenu(char* inpDest) {
+int CH_CreateMenu(char* inpDest) {
 
     inpLen = 0;
     int cursorX = inpLen;
@@ -178,6 +179,11 @@ bool CH_CreateMenu(char* inpDest) {
                     addChar(inputtext, cursorX, ch);
                     inpLen++;
                     cursorX++;
+                    for (int i = cursorX; i< inpLen; i++) {
+                        ch[0] = inputtext[i];
+                        ch[1] = '\0';
+                        inpPrefixLen[i] = inpPrefixLen[i-1] + getTextLen(ch);
+                    }
                     inpPrefixLen[inpLen] = getTextLen(inputtext);
                     inpFlag = true;
                 }
@@ -186,14 +192,20 @@ bool CH_CreateMenu(char* inpDest) {
                 switch (eve.key.keysym.sym) {
                     case SDLK_BACKSPACE:
                         if (inpLen >= 0 && cursorX != 0) {
-                            inputtext[inpLen] = '\0';
+                            char ch[2];
                             for (int i = cursorX; i<=inpLen; i++) {
                                 inputtext[i-1] = inputtext[i];
                             }
-                            inpFlag = true;
-                            frombackspace =true;
                             inpLen--;
                             cursorX--;
+                            inputtext[inpLen] = '\0';
+                            for (int i = cursorX; i <inpLen; i++) {
+                                ch[0] = inputtext[0];
+                                ch[1] = '\0';
+                                inpPrefixLen[i] = inpPrefixLen[i-1] + getTextLen(ch);
+                            }
+                            inpFlag = true;
+                            frombackspace =true;
                         }
                         break;
                     case SDLK_DELETE:
@@ -211,6 +223,12 @@ bool CH_CreateMenu(char* inpDest) {
                         if (*inputtext == '"' && inputtext[inpLen-1] == '"') {
                             memmove(inputtext, inputtext+1, strlen(inputtext)-2);
                             inputtext[strlen(inputtext)-2 ]= '\0';
+                        }
+                        strcpy(inpDest, inputtext);
+                        if (isHTTPS(inputtext)) {
+                                exit_code = EXIT_IMAGEPATH_URL;
+                        } else {
+                            exit_code = EXIT_IMAGEPATH_SYSTEM;
                         }
                         done = true;
                         inpFlag =true;
@@ -306,7 +324,6 @@ bool CH_CreateMenu(char* inpDest) {
 
         if (inpFlag) {
             if (done) {
-                strcpy(inpDest, inputtext);
                 loop = false;
             } else {
             update();

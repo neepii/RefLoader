@@ -1,5 +1,5 @@
-#ifndef CROSS_H_
-#define CROSS_H_
+#ifndef IMAGE_H_
+#define IMAGE_H_
 #include <stdbool.h>
 
 

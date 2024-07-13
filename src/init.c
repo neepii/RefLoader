@@ -17,15 +17,17 @@ static SDL_Texture * mtexture;
 static SDL_Texture * foldertex;
 static SDL_Surface * msurface;
 static SDL_Surface * foldersrf;
+static TTF_Font * font;
 
 
-static SDL_Rect textbox = {30,420,580,30};
+static SDL_Rect textbox = {30,420,580,25};
 static SDL_Rect buttondialog = {133,15,374,374};
 static const int mwW = 640;
 static const int mwH = 480;
 
 bool inpFlag;
 int inpLen;
+static const int cursorpadding = 3;
 
 int exit_code = 0;
 
@@ -40,6 +42,29 @@ HWND getHWND(SDL_Window * window) {
 
     return wminfo.info.win.window;
 };
+
+static void addChar(char * dest, int pos, char* seed) {
+
+
+    char temp[512];
+    memset(temp,0,512);
+
+    strncpy(temp, dest, pos);
+    int len = strlen(temp);
+    strcpy(temp+len, seed);
+    len += strlen(seed);
+    strcpy(temp+len, dest+pos);
+
+    strcpy(dest, temp);
+
+}
+static int getTextLen(char * text) {
+    int w;
+    TTF_SizeText(font, text, &w, NULL);
+    return w;
+}
+
+
 
 
 bool CH_InitSDL() {
@@ -94,6 +119,7 @@ void CH_Quit() {
 bool CH_CreateMenu(char* inpDest) {
 
     inpLen = 0;
+    int cursorX = inpLen;
     mwindow = SDL_CreateWindow("Ref", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
     mrender = SDL_CreateRenderer(mwindow, -1,SDL_RENDERER_SOFTWARE);
     mtexture = SDL_CreateTextureFromSurface(mrender, msurface);
@@ -108,6 +134,8 @@ bool CH_CreateMenu(char* inpDest) {
     SDL_FreeSurface(tempsrf);
 
     char inputtext[MAX_TEXT_LEN];
+    int inpPrefixLen[MAX_TEXT_LEN+1];
+    inpPrefixLen[0] = 0;
     memset(inputtext, 0, strlen(inputtext));
     SDL_Color black = {0,0,0};
     SDL_Texture * inpTexture= SDL_CreateTextureFromSurface(mrender, msurface);
@@ -115,7 +143,8 @@ bool CH_CreateMenu(char* inpDest) {
     inpRect.y = textbox.y;
     inpRect.w = textbox.w;
     inpRect.h = textbox.h;
-    TTF_Font * font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 20);
+    SDL_Rect cursorrect;
+    font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 20);
     if (font == NULL) {
         fprintf(stderr, "ERROR: %s\n", SDL_GetError());
         return EXIT_FAILURE;
@@ -145,41 +174,85 @@ bool CH_CreateMenu(char* inpDest) {
                 break;
             case SDL_TEXTINPUT:
                 if (inpLen + 1 <= MAX_TEXT_LEN) {
-                    strcat(inputtext, eve.text.text);
+                    char ch[2] = {eve.text.text[0], '\0'};
+                    addChar(inputtext, cursorX, ch);
                     inpLen++;
+                    cursorX++;
+                    inpPrefixLen[inpLen] = getTextLen(inputtext);
                     inpFlag = true;
                 }
                 break;
             case SDL_KEYDOWN:
-                if (eve.key.keysym.sym == SDLK_BACKSPACE && inpLen >= 0) {
-                    inpLen--;
-                    inputtext[inpLen] = '\0';
-                    inpFlag = true;
-                    frombackspace =true;
-                }
+                switch (eve.key.keysym.sym) {
+                    case SDLK_BACKSPACE:
+                        if (inpLen >= 0 && cursorX != 0) {
+                            inputtext[inpLen] = '\0';
+                            for (int i = cursorX; i<=inpLen; i++) {
+                                inputtext[i-1] = inputtext[i];
+                            }
+                            inpFlag = true;
+                            frombackspace =true;
+                            inpLen--;
+                            cursorX--;
+                        }
+                        break;
+                    case SDLK_DELETE:
+                        if (inpLen >= 0 && cursorX != inpLen && inpLen != 0) {
+                            inputtext[inpLen] = '\0';
+                            for (int i = cursorX; i<=inpLen; i++) {
+                                inputtext[i] = inputtext[i+1];
+                            }
+                            inpFlag = true;
+                            inpLen--;
+                        }
+                        break;
 
-                else if (eve.key.keysym.sym == SDLK_RETURN) {
-                    if (*inputtext == '"' && inputtext[inpLen-1] == '"') {
-                        memmove(inputtext, inputtext+1, strlen(inputtext)-2);
-                        inputtext[strlen(inputtext)-2 ]= '\0';
-                    }
-                    done = true;
-                    inpFlag =true;
-                    
-                }
-                else if (eve.key.keysym.sym == SDLK_c && KMOD_CTRL) {
-                    SDL_SetClipboardText(inputtext);
-                    inpFlag = true;
-                }
-                else if (eve.key.keysym.sym == SDLK_v && KMOD_CTRL) {
-                    char * cliptext = SDL_GetClipboardText();
-                    int clipLen = strlen(cliptext);
-                        if ((inpLen+clipLen) < MAX_TEXT_LEN) {
+                    case SDLK_RETURN:
+                        if (*inputtext == '"' && inputtext[inpLen-1] == '"') {
+                            memmove(inputtext, inputtext+1, strlen(inputtext)-2);
+                            inputtext[strlen(inputtext)-2 ]= '\0';
+                        }
+                        done = true;
+                        inpFlag =true;
+                        break;
+                        
+                    case SDLK_c:
+                        if (KMOD_CTRL) {
+                            SDL_SetClipboardText(inputtext);
+                        }
+                        break;
+                    case SDLK_v:
+                        if(KMOD_CTRL) {
+                            char cliptext[MAX_TEXT_LEN];
+                            strcpy(cliptext, SDL_GetClipboardText());
+                            int clipLen = strlen(cliptext);
+                        if ((inpLen+clipLen) < MAX_TEXT_LEN) { 
                             strncat(inputtext, cliptext, clipLen);
+                            char ch[2];
+                            for (int i = 0; i< clipLen; i++) {
+                                *ch = cliptext[i];
+                                *(ch+1) = '\0'; 
+                                inpPrefixLen[inpLen+i+1] = inpPrefixLen[inpLen+i] + getTextLen(ch); // what if +1 causes out of bounds error? 
+                            }
                             inpLen += clipLen;
+                            cursorX += clipLen;
+                            inpFlag = true;
+                            }
+                        }
+                        break; 
+                    case SDLK_RIGHT:
+                        if (cursorX < inpLen) {
+                            cursorX++;
                             inpFlag = true;
                         }
-                }
+                        break;
+                    case SDLK_LEFT:
+                        if (cursorX > 0) {
+                            cursorX--;
+                            inpFlag = true;
+                        }
+                        break;
+                    }
                 break;
             case SDL_MOUSEBUTTONDOWN:
 
@@ -211,8 +284,16 @@ bool CH_CreateMenu(char* inpDest) {
                             if ((inpLen+pathLen) < MAX_TEXT_LEN) {
                                 memset(inputtext, 0, inpLen);
                                 strncat(inputtext, path, pathLen);
-                                inpLen += pathLen;
+                            char ch[2];
+                            for (int i = 0; i< pathLen; i++) {
+                                *ch = path[i];
+                                *(ch+1) = '\0'; 
+                                inpPrefixLen[inpLen+i+1] = inpPrefixLen[inpLen+i] + getTextLen(ch);
+                            }
+                                inpLen = pathLen;
+                                cursorX = pathLen;
                                 inpFlag = true;
+                                // done = true;
                             }
                         }
                         
@@ -232,12 +313,15 @@ bool CH_CreateMenu(char* inpDest) {
             SDL_Surface * inpSurf = TTF_RenderText_Blended(font, inputtext, black);
             inpTexture = SDL_CreateTextureFromSurface(mrender,inpSurf);
             if (frombackspace && inpSurf == 0x0) {
-                inpRect.w = 0;
-                inpRect.h = 0;
+                inpRect.w = 0; inpRect.h = 0;
             } else {
-                inpRect.w = inpSurf->w;
-                inpRect.h = inpSurf->h;
+                inpRect.w = inpSurf->w; inpRect.h = inpSurf->h;
             }
+
+            cursorrect.x = inpPrefixLen[cursorX]+30; cursorrect.y = textbox.y + cursorpadding;
+            cursorrect.w = 1; cursorrect.h = textbox.h - (2 * cursorpadding);
+            SDL_FillRect(msurface, &cursorrect, SDL_MapRGB(msurface->format, 150, 150,150));
+
             SDL_RenderCopy(mrender, inpTexture, NULL, &inpRect);
 
             

@@ -129,11 +129,13 @@ bool CH_CreateMenu(char* inpDest) {
     SDL_StartTextInput();
     bool done = false;
     bool loop = true;
+    bool frombackspace = false;
 
 
     while(loop) {
         SDL_Event eve;
         inpFlag = false;
+
         while(SDL_PollEvent(&eve)) {
             switch (eve.type)
             {
@@ -150,9 +152,10 @@ bool CH_CreateMenu(char* inpDest) {
                 break;
             case SDL_KEYDOWN:
                 if (eve.key.keysym.sym == SDLK_BACKSPACE && inpLen >= 0) {
-                    inputtext[inpLen-1] = '\0';
                     inpLen--;
+                    inputtext[inpLen] = '\0';
                     inpFlag = true;
+                    frombackspace =true;
                 }
 
                 else if (eve.key.keysym.sym == SDLK_RETURN) {
@@ -220,7 +223,7 @@ bool CH_CreateMenu(char* inpDest) {
             }
         }
 
-        if (inpLen && inpFlag) {
+        if (inpFlag) {
             if (done) {
                 strcpy(inpDest, inputtext);
                 loop = false;
@@ -228,9 +231,13 @@ bool CH_CreateMenu(char* inpDest) {
             update();
             SDL_Surface * inpSurf = TTF_RenderText_Blended(font, inputtext, black);
             inpTexture = SDL_CreateTextureFromSurface(mrender,inpSurf);
-            inpRect.w = inpSurf->w;
-            inpRect.h = inpSurf->h;
-
+            if (frombackspace && inpSurf == 0x0) {
+                inpRect.w = 0;
+                inpRect.h = 0;
+            } else {
+                inpRect.w = inpSurf->w;
+                inpRect.h = inpSurf->h;
+            }
             SDL_RenderCopy(mrender, inpTexture, NULL, &inpRect);
 
             

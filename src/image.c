@@ -13,7 +13,7 @@ static SDL_Texture * imgtexture;
 static SDL_Surface * imgsurface;
 static SDL_Surface * surface;
 
-
+int dragSide = 35;
 static int wW;
 static int wH;
 
@@ -21,7 +21,7 @@ POINT cursorpos;
 
 
 static void UpdateImage() {
-    SDL_SetRenderDrawColor(render, 255,255,255,255);
+    SDL_SetRenderDrawColor(render,219,233,244,255);
     SDL_RenderClear(render);
 
     SDL_UpdateWindowSurface(window);
@@ -29,16 +29,21 @@ static void UpdateImage() {
     int w,h;
     SDL_GetWindowSize(window, &w, &h);
     SDL_Rect winrect = {0, 0, w, h};
-    // SDL_FillRect(surface, &winrect, SDL_MapRGB(surface->format, 255,255,255));
-    SDL_Rect rect;
 
+    SDL_Rect rect;
     rect.h = imgsurface->h;
     rect.w = imgsurface->w;
     rect.x = (winrect.w/2) - (rect.w/2);
     rect.y = (winrect.h/2) - (rect.h/2);
     imgtexture = SDL_CreateTextureFromSurface(render, imgsurface);
     SDL_RenderCopy(render, imgtexture, NULL, &rect);
-    SDL_DestroyTexture(imgtexture);
+
+
+    SDL_SetRenderDrawColor(render,255,255,255,255);
+    SDL_Rect dragRect={winrect.w-dragSide,winrect.h-dragSide,dragSide, dragSide};
+    SDL_RenderFillRect(render,&dragRect);
+
+    SDL_DestroyTexture(imgtexture);    
     SDL_RenderPresent(render);
 }
 
@@ -88,12 +93,8 @@ static bool load(char * path) {
 
 void CH_InitImage(char * path) {
 
-    HWND hwnd = getHWND(window);
-    MSG msg = {0};
-    if (!RegisterHotKey(NULL, HOTKEY1, MOD_CONTROL | MOD_NOREPEAT | MOD_ALT, 0x52)) {
-        fprintf(stderr, "ERROR:%s", SDL_GetError());
-        CH_Quit();
-    }
+    // HWND hwnd = getHWND(window);
+    // MSG msg = {0};
     
     if (!load(path)) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
@@ -103,44 +104,43 @@ void CH_InitImage(char * path) {
         fprintf(stderr, "ERROR:%s", SDL_GetError());
         CH_Quit();
     };
-
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
     
     bool loop = true;
     bool holding = false;
+    bool sizing = false;
+    RECT winrect;
 
-    
     while(loop) {
-
-
+        GetWindowRect(getHWND(window), &winrect);
         SDL_Event eve;
         while (SDL_PollEvent(&eve)) {
-            GetMessage(&msg, hwnd, 0,0);
+            // GetMessage(&msg, hwnd, 0,0);
             switch (eve.type)
             {
             case SDL_QUIT:
                 loop = false;
                 break;
-            case SDL_SYSWMEVENT:
-                if (msg.message == WM_HOTKEY && LOWORD(msg.wParam) == HOTKEY1) {
+            // case SDL_SYSWMEVENT:
+            //     break;
+            case SDL_KEYDOWN:
+                if (eve.key.keysym.sym == SDLK_q && KMOD_CTRL) {
                     loop = false;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 GetCursorPos(&cursorpos);
-                holding = true;
+
+                if (cursorpos.x > (winrect.right-dragSide) &&
+                    cursorpos.y > (winrect.bottom-dragSide)) {
+                    sizing = true;
+                } else if (eve.button.button == SDL_BUTTON_RIGHT) {
+                    holding = true;
+                }
                 break;
             case SDL_MOUSEBUTTONUP:
                 holding = false;
-                break;
-            case SDL_WINDOWEVENT:
-                if (eve.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    UpdateImage();
-                } else if (eve.window.event == SDL_WINDOWEVENT_EXPOSED) {
-                    UpdateImage();
-                    SDL_RenderPresent(render);
-                }
-
+                sizing = false;
                 break;
         
             default:
@@ -151,7 +151,6 @@ void CH_InitImage(char * path) {
 
         if (holding) {
             POINT temp = cursorpos;
-            SDL_Delay(5);
             GetCursorPos(&cursorpos);
 
             int deltax = (int)(cursorpos.x - temp.x);
@@ -160,6 +159,17 @@ void CH_InitImage(char * path) {
             int winx, winy;
             SDL_GetWindowPosition(window, &winx, &winy);  
             SDL_SetWindowPosition(window, winx + deltax, winy + deltay);          
+        } else if (sizing) {
+            POINT temp = cursorpos;
+            GetCursorPos(&cursorpos);
+
+            int deltax = (int)(cursorpos.x - temp.x);
+            int deltay = (int)(cursorpos.y - temp.y);
+
+            int winx, winy;
+            SDL_GetWindowSize(window, &winx, &winy);
+            SDL_SetWindowSize(window, winx + deltax, winy + deltay);
+            UpdateImage();
         }
 
         SDL_Delay(10);

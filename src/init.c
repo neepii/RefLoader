@@ -129,6 +129,8 @@ void CH_Quit() {
 
 int CH_CreateMenu(char* inpDest) {
 
+    HWND hwnd = getHWND(mwindow);
+
     inpLen = 0;
     int cursorX = inpLen;
     mwindow = SDL_CreateWindow("Ref", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);

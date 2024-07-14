@@ -248,14 +248,9 @@ int CH_CreateMenu(char* inpDest) {
                             int clipLen = strlen(cliptext);
                         if ((inpLen+clipLen) < MAX_TEXT_LEN) { 
                             strncat(inputtext, cliptext, clipLen);
-                            char ch[2];
-                            for (int i = 0; i< clipLen; i++) {
-                                *ch = cliptext[i];
-                                *(ch+1) = '\0'; 
-                                inpPrefixLen[inpLen+i+1] = inpPrefixLen[inpLen+i] + getTextLen(ch); // what if +1 causes out of bounds error? 
-                            }
                             inpLen += clipLen;
                             cursorX += clipLen;
+                            UpdatePrefix(0, inpLen, inputtext);
                             inpFlag = true;
                             }
                         }
@@ -312,14 +307,9 @@ int CH_CreateMenu(char* inpDest) {
                             if ((inpLen+pathLen) < MAX_TEXT_LEN) {
                                 memset(inputtext, 0, inpLen);
                                 strncat(inputtext, path, pathLen);
-                            char ch[2];
-                            for (int i = 0; i< pathLen; i++) {
-                                *ch = path[i];
-                                *(ch+1) = '\0'; 
-                                inpPrefixLen[inpLen+i+1] = inpPrefixLen[inpLen+i] + getTextLen(ch);
-                            }
                                 inpLen = pathLen;
                                 cursorX = pathLen;
+                                UpdatePrefix(0,inpLen, inputtext);
                                 inpFlag = true;
                                 // done = true;
                             }

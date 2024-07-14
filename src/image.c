@@ -17,7 +17,7 @@ static SDL_Surface * surface;
 static int wW;
 static int wH;
 
-
+POINT cursorpos;
 
 
 static void UpdateImage() {
@@ -43,13 +43,13 @@ static void UpdateImage() {
 }
 
 static bool init() {
-    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
     
     if (window == NULL) {
         fprintf(stderr, "ERROR: Window is NULL. %s\n", SDL_GetError());
         return false;
     }
-    render = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
     if (render == NULL) {
         fprintf(stderr, "ERROR: Renderer is NULL. %s\n", SDL_GetError());
         return false;
@@ -108,6 +108,7 @@ void CH_InitImage(char * path) {
     
     bool loop = true;
     bool holding = false;
+
     
     while(loop) {
 
@@ -126,6 +127,7 @@ void CH_InitImage(char * path) {
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
+                GetCursorPos(&cursorpos);
                 holding = true;
                 break;
             case SDL_MOUSEBUTTONUP:
@@ -147,8 +149,20 @@ void CH_InitImage(char * path) {
             
         };
 
+        if (holding) {
+            POINT temp = cursorpos;
+            SDL_Delay(5);
+            GetCursorPos(&cursorpos);
 
-        SDL_Delay(50);
+            int deltax = (int)(cursorpos.x - temp.x);
+            int deltay = (int)(cursorpos.y - temp.y);
+
+            int winx, winy;
+            SDL_GetWindowPosition(window, &winx, &winy);  
+            SDL_SetWindowPosition(window, winx + deltax, winy + deltay);          
+        }
+
+        SDL_Delay(10);
     }
     SDL_FreeSurface(surface);
     SDL_DestroyRenderer(render);

@@ -11,12 +11,13 @@ int main(int argc, char** argv) {
     CH_InitSDL();
 
     int exit_code = CH_CreateMenu(Destination);
-    if (exit_code == EXIT_IMAGEPATH_SYSTEM) {
-        CH_InitImage(Destination);
-    } else if (exit_code == EXIT_IMAGEPATH_URL) {
+
+    if (exit_code == EXIT_IMAGEPATH_URL) {
         DownloadImage(Destination);
-        CH_InitImage("res/lastimage.png");
+        strncpy(Destination,"res/lastimage.png",18);
     }
+
+    CH_InitImage(Destination);
     free(Destination);
     CH_Quit();
 

@@ -107,6 +107,7 @@ void CH_InitImage(char * path) {
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
     
     bool loop = true;
+    bool holding = false;
     
     while(loop) {
 
@@ -119,17 +120,17 @@ void CH_InitImage(char * path) {
             case SDL_QUIT:
                 loop = false;
                 break;
-            // case SDL_SYSWMEVENT:
-            //     if (msg.message == WM_HOTKEY && LOWORD(msg.wParam) == HOTKEY1) {
-            //         loop = false;
-            //     }
-            //     break;
-            // case SDL_MOUSEBUTTONDOWN:
-            //     holding = true;
-            //     break;
-            // case SDL_MOUSEBUTTONUP:
-            //     holding = false;
-            //     break;
+            case SDL_SYSWMEVENT:
+                if (msg.message == WM_HOTKEY && LOWORD(msg.wParam) == HOTKEY1) {
+                    loop = false;
+                }
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                holding = true;
+                break;
+            case SDL_MOUSEBUTTONUP:
+                holding = false;
+                break;
             case SDL_WINDOWEVENT:
                 if (eve.window.event == SDL_WINDOWEVENT_RESIZED) {
                     UpdateImage();

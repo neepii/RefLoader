@@ -28,6 +28,7 @@ static SDL_Rect buttondialog = {133,15,374,374};
 static const int mwW = 640;
 static const int mwH = 480;
 
+int inpPrefixLen[MAX_TEXT_LEN+1];
 bool inpFlag;
 int inpLen;
 static const int cursorpadding = 3;
@@ -64,6 +65,15 @@ static int getTextLen(char * text) {
     int w;
     TTF_SizeText(font, text, &w, NULL);
     return w;
+}
+
+static void UpdatePrefix(int start, int end, char * inputtext) {
+    char temp[MAX_TEXT_LEN];
+    for (int i = start; i<=end; i++) {
+        strncpy(temp, inputtext, inpLen);
+        temp[i] = '\0';
+        inpPrefixLen[i] = getTextLen(temp);
+    }
 }
 
 
@@ -135,7 +145,6 @@ int CH_CreateMenu(char* inpDest) {
     SDL_FreeSurface(tempsrf);
 
     char inputtext[MAX_TEXT_LEN];
-    int inpPrefixLen[MAX_TEXT_LEN+1];
     inpPrefixLen[0] = 0;
     memset(inputtext, 0, strlen(inputtext));
     SDL_Color black = {0,0,0};
@@ -171,7 +180,7 @@ int CH_CreateMenu(char* inpDest) {
             {
             case SDL_QUIT:
                 loop = false;
-                exit_code = 1;
+                exit_code = EXIT_QUIT;
                 break;
             case SDL_TEXTINPUT:
                 if (inpLen + 1 <= MAX_TEXT_LEN) {
@@ -179,12 +188,7 @@ int CH_CreateMenu(char* inpDest) {
                     addChar(inputtext, cursorX, ch);
                     inpLen++;
                     cursorX++;
-                    for (int i = cursorX; i< inpLen; i++) {
-                        ch[0] = inputtext[i];
-                        ch[1] = '\0';
-                        inpPrefixLen[i] = inpPrefixLen[i-1] + getTextLen(ch);
-                    }
-                    inpPrefixLen[inpLen] = getTextLen(inputtext);
+                    UpdatePrefix(cursorX, inpLen, inputtext);
                     inpFlag = true;
                 }
                 break;
@@ -192,18 +196,15 @@ int CH_CreateMenu(char* inpDest) {
                 switch (eve.key.keysym.sym) {
                     case SDLK_BACKSPACE:
                         if (inpLen >= 0 && cursorX != 0) {
-                            char ch[2];
                             for (int i = cursorX; i<=inpLen; i++) {
                                 inputtext[i-1] = inputtext[i];
                             }
+                            inputtext[inpLen] = '\0';
+
+                            UpdatePrefix(cursorX, inpLen,inputtext);
+
                             inpLen--;
                             cursorX--;
-                            inputtext[inpLen] = '\0';
-                            for (int i = cursorX; i <inpLen; i++) {
-                                ch[0] = inputtext[0];
-                                ch[1] = '\0';
-                                inpPrefixLen[i] = inpPrefixLen[i-1] + getTextLen(ch);
-                            }
                             inpFlag = true;
                             frombackspace =true;
                         }
@@ -214,6 +215,7 @@ int CH_CreateMenu(char* inpDest) {
                             for (int i = cursorX; i<=inpLen; i++) {
                                 inputtext[i] = inputtext[i+1];
                             }
+                            UpdatePrefix(cursorX, inpLen, inputtext);
                             inpFlag = true;
                             inpLen--;
                         }
@@ -269,6 +271,14 @@ int CH_CreateMenu(char* inpDest) {
                             cursorX--;
                             inpFlag = true;
                         }
+                        break;
+                    case SDLK_END:
+                        cursorX = inpLen;
+                        inpFlag = true;
+                        break;
+                    case SDLK_HOME:
+                        cursorX = 0;
+                        inpFlag = true;
                         break;
                     }
                 break;

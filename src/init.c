@@ -37,6 +37,25 @@ int exit_code = 0;
 
 char * inputtext;
 SDL_Rect inpRect;
+char ** dests;
+int destLen;
+
+void freeDests() {
+    for (int i = 0; i < destLen; i++) {
+        free(dests[i]);
+    }
+    free(dests);
+}
+
+void allocDests(int count) {
+    destLen = count;
+    dests = (char**) malloc(sizeof(char*) * destLen);
+    for (int i = 0; i < destLen; i++)
+    {
+        dests[i] = (char*) malloc(sizeof(char)*MAX_TEXT_LEN);
+        memset(dests[i], 0, MAX_TEXT_LEN);
+    }
+}
 
 
 HWND getHWND(SDL_Window * window) {
@@ -127,7 +146,7 @@ void CH_Quit() {
 
 
 
-int CH_CreateMenu(char* inpDest) {
+int CH_CreateMenu(void) {
 
     // HWND hwnd = getHWND(mwindow);
 
@@ -148,8 +167,8 @@ int CH_CreateMenu(char* inpDest) {
     SDL_FreeSurface(tempsrf);
 
     char inputtext[MAX_TEXT_LEN];
-    inpPrefixLen[0] = 0;
     memset(inputtext, 0, strlen(inputtext));
+    inpPrefixLen[0] = 0;
     SDL_Color black = {0,0,0};
     SDL_Texture * inpTexture= SDL_CreateTextureFromSurface(mrender, msurface);
     inpRect.x = textbox.x;         
@@ -229,12 +248,13 @@ int CH_CreateMenu(char* inpDest) {
                             memmove(inputtext, inputtext+1, strlen(inputtext)-2);
                             inputtext[strlen(inputtext)-2 ]= '\0';
                         }
-                        strcpy(inpDest, inputtext);
                         if (isHTTPS(inputtext)) {
-                                exit_code = EXIT_IMAGEPATH_URL;
+                            exit_code = EXIT_IMAGEPATH_URL;
                         } else {
                             exit_code = EXIT_IMAGEPATH_SYSTEM;
                         }
+                        allocDests(1);
+                        strncpy(dests[0], inputtext, inpLen);
                         done = true;
                         inpFlag =true;
                         break;
@@ -245,16 +265,16 @@ int CH_CreateMenu(char* inpDest) {
                         }
                         break;
                     case SDLK_v:
-                        if(KMOD_CTRL) {
+                        if(eve.key.keysym.mod & KMOD_CTRL) {
                             char cliptext[MAX_TEXT_LEN];
                             strcpy(cliptext, SDL_GetClipboardText());
                             int clipLen = strlen(cliptext);
-                        if ((inpLen+clipLen) < MAX_TEXT_LEN) { 
-                            strncat(inputtext, cliptext, clipLen);
-                            inpLen += clipLen;
-                            cursorX += clipLen;
-                            UpdatePrefix(0, inpLen, inputtext);
-                            inpFlag = true;
+                            if ((inpLen+clipLen) < MAX_TEXT_LEN) { 
+                                addChar(inputtext, cursorX, cliptext);
+                                inpLen += clipLen;
+                                cursorX += clipLen;
+                                UpdatePrefix(0, inpLen, inputtext);
+                                inpFlag = true;
                             }
                         }
                         break; 
@@ -303,19 +323,41 @@ int CH_CreateMenu(char* inpDest) {
                         dialog.lpstrFileTitle = NULL;
                         dialog.nMaxFileTitle = 0;
                         dialog.lpstrInitialDir = NULL;
-                        dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+                        dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_EXPLORER | OFN_ALLOWMULTISELECT;
                         if (GetOpenFileName(&dialog)) {
-                            char * path = dialog.lpstrFile;
-                            int pathLen = strlen(path);
-                            if ((inpLen+pathLen) < MAX_TEXT_LEN) {
-                                memset(inputtext, 0, inpLen);
-                                strncat(inputtext, path, pathLen);
-                                inpLen = pathLen;
-                                cursorX = pathLen;
-                                UpdatePrefix(0,inpLen, inputtext);
-                                inpFlag = true;
-                                done = true;
+                            int count = 0;
+                            char * catalog = dialog.lpstrFile;
+                            char * ptr = catalog + dialog.nFileOffset;
+                            while (*ptr) {
+                                count++;
+                                ptr += strlen(ptr) + 1;
                             }
+                            allocDests(count);
+                            if (count == 1) {
+                                strncpy(dests[0], catalog, strlen(catalog));
+                            }
+                            else {
+                                ptr = catalog + dialog.nFileOffset;
+                                allocDests(count);
+                                for (int i = 0; i < count; i++)
+                                {
+                                    char temp[256];
+                                    int len = 0;
+                                    strncpy(temp, catalog, dialog.nFileOffset);
+                                    len = dialog.nFileOffset;
+                                    temp[len-1] = '\\';
+                                    strncpy(temp+len, ptr, strlen(ptr));
+                                    len += strlen(ptr);
+                                    strncpy(temp+len, "\0", 1);
+                                    ptr += strlen(ptr) + 1;
+                                    strncpy(dests[i], temp, strlen(temp));
+                                }
+                            }
+                            done = true;
+                            inpFlag = true;
+                            exit_code = EXIT_IMAGEPATH_SYSTEM;
+                        } else {
+                            printf("PATHSIZE bypassed or just canceled\n");
                         }
                         
                     }
@@ -325,11 +367,10 @@ int CH_CreateMenu(char* inpDest) {
             }
         }
 
-        if (inpFlag) {
-            if (done) {
-                strcpy(inpDest, inputtext);
-                loop = false;
-            } else {
+        if (inpFlag && done) {
+            loop = false;
+        }
+        else if (inpFlag) {
             update();
             SDL_Surface * inpSurf = TTF_RenderText_Blended(font, inputtext, black);
             inpTexture = SDL_CreateTextureFromSurface(mrender,inpSurf);
@@ -346,10 +387,17 @@ int CH_CreateMenu(char* inpDest) {
                 inpRect.w = inpSurf->w; inpRect.h = inpSurf->h;
             }
 
-            if (inpRect.w > textbox.w) {
+            bool isBig = (delta > textbox.w) ? true : false;
+
+            if (inpRect.w > textbox.w && !isBig) {
                 inpRect.x -= delta;
                 inpShift += delta;
-            } else {
+            }
+            else if (inpRect.w > textbox.w && isBig) {
+                inpRect.x -= delta - textbox.w;
+                inpShift += delta - textbox.w;
+            } 
+            else {
                 inpRect.x = textbox.x;
                 inpShift = 0;
             }
@@ -361,13 +409,9 @@ int CH_CreateMenu(char* inpDest) {
 
             SDL_RenderFillRect(mrender, &hiderect);
 
-            
             SDL_DestroyTexture(inpTexture);
             SDL_FreeSurface(inpSurf);
             }
-            
-        }
-
         SDL_RenderPresent(mrender);
         SDL_Delay(10);
 
@@ -376,6 +420,7 @@ int CH_CreateMenu(char* inpDest) {
     SDL_StopTextInput();
     TTF_CloseFont(font);
     SDL_DestroyTexture(mtexture);
+    SDL_DestroyRenderer(mrender);
     SDL_DestroyWindowSurface(mwindow);
     SDL_DestroyWindow(mwindow);
 

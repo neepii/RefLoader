@@ -17,14 +17,23 @@ int dragSide = 35;
 static int wW;
 static int wH;
 
-POINT cursorpos;
+POINT cursorpos;   
 
+
+typedef enum {
+    NO,
+    HOLD_WIN,
+    HOLD_NW,
+    HOLD_NE,
+    HOLD_SW,
+    HOLD_SE,
+    HOLD_ALT
+} imgstate;
 
 
 static void ChangeCursor(LPCSTR cursorname)  {
     SetCursor(LoadCursor(NULL, cursorname));
 }
-
 
 static void UpdateImage() {
     SDL_SetRenderDrawColor(render,219,233,244,255);
@@ -46,8 +55,12 @@ static void UpdateImage() {
 
 
     SDL_SetRenderDrawColor(render,255,255,255,255);
-    SDL_Rect dragRect={winrect.w-dragSide,winrect.h-dragSide,dragSide, dragSide};
-    SDL_RenderFillRect(render,&dragRect);
+    SDL_Rect dragRect0 ={0,0, dragSide, dragSide};
+    SDL_Rect dragRect1 ={winrect.w-dragSide, 0, dragSide, dragSide};
+    SDL_Rect dragRect2 ={0, winrect.h - dragSide, dragSide, dragSide};
+    SDL_Rect dragRect3={winrect.w - dragSide,winrect.h-dragSide,dragSide, dragSide};
+    SDL_Rect dragRects[4]={dragRect0,dragRect1,dragRect2,dragRect3};
+    SDL_RenderFillRects(render,dragRects,4);
 
     SDL_DestroyTexture(imgtexture);    
     SDL_RenderPresent(render);
@@ -112,10 +125,9 @@ void CH_InitImage(char * path) {
     };
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
     
-    bool loop = true;
-    bool holding = false;
-    bool sizing = false;
+    imgstate st;
     RECT winrect;
+    bool loop = true;                          
 
     while(loop) {
         GetWindowRect(getHWND(window), &winrect);
@@ -138,47 +150,85 @@ void CH_InitImage(char * path) {
                 GetCursorPos(&cursorpos);
                 if (cursorpos.x > (winrect.right-dragSide) &&
                     cursorpos.y > (winrect.bottom-dragSide)) {
-                    sizing = true;
+                    st = HOLD_SE;
                     ChangeCursor(IDC_SIZENWSE);
-                } else if (eve.button.button == SDL_BUTTON_RIGHT) {
-                    holding = true;
+                }
+                else if (cursorpos.x < (winrect.left+dragSide) &&
+                         cursorpos.y > (winrect.bottom-dragSide)) {
+                    st = HOLD_SW;
+                    ChangeCursor(IDC_SIZENESW);
+                }
+                else if (cursorpos.x > (winrect.right-dragSide) &&
+                         cursorpos.y < (winrect.top+dragSide)) {
+                    st = HOLD_NE;
+                    ChangeCursor(IDC_SIZENESW);
+                }
+                else if (cursorpos.x < (winrect.left+dragSide) &&
+                         cursorpos.y < (winrect.top+dragSide)) {
+                    st = HOLD_NW;
+                    ChangeCursor(IDC_SIZENWSE);
+                }
+                else if((eve.key.keysym.mod & KMOD_ALT) &&
+                        (eve.button.button == SDL_BUTTON_LEFT)) {
+                    st = HOLD_ALT;
+                    ChangeCursor(IDC_SIZENWSE);
+                }
+                else if (eve.button.button == SDL_BUTTON_RIGHT) {
+                    st = HOLD_WIN;
                     ChangeCursor(IDC_SIZEALL);
                 }
+                
                 break;
             case SDL_MOUSEBUTTONUP:
-                holding = false;
-                sizing = false;
+                st = NO;
                 break;
         
             default:
                 break;
             }
             
-        };
+    };
+        POINT temp = cursorpos;
+        GetCursorPos(&cursorpos);
 
-        if (holding) {
-            POINT temp = cursorpos;
-            GetCursorPos(&cursorpos);
+        int deltax = (int)(cursorpos.x - temp.x);
+        int deltay = (int)(cursorpos.y - temp.y);
 
-            int deltax = (int)(cursorpos.x - temp.x);
-            int deltay = (int)(cursorpos.y - temp.y);
+        int winx, winy;
+        int winw, winh;
+        SDL_GetWindowPosition(window, &winx, &winy); 
+        SDL_GetWindowSize(window, &winw, &winh);
 
-            int winx, winy;
-            SDL_GetWindowPosition(window, &winx, &winy);  
-            SDL_SetWindowPosition(window, winx + deltax, winy + deltay);          
-        } else if (sizing) {
-            POINT temp = cursorpos;
-            GetCursorPos(&cursorpos);
+        switch (st) {
+            case HOLD_WIN:
+                // SDL_SetWindowPosition(window, winx + deltax, winy + deltay);          
+                SetWindowPos(getHWND(window), 0, winx+deltax,winy+deltay,0,0, SWP_NOSIZE | SWP_NOZORDER);
+                break;
+            case HOLD_SE:
+                SDL_SetWindowSize(window, winw + deltax, winh + deltay);
+                break;
+            case HOLD_SW:
+                SDL_SetWindowPosition(window, winx + deltax, winy);
+                SDL_SetWindowSize(window, winw -deltax, winh + deltay);
+                break;
+            case HOLD_NE:
+                SDL_SetWindowPosition(window, winx, winy + deltay);
+                SDL_SetWindowSize(window, winw + deltax, winh - deltay);
+                break;
+            case HOLD_NW:
+                SDL_SetWindowPosition(window, winx+deltax, winy + deltay);
+                SDL_SetWindowSize(window, winw - deltax, winh - deltay);
+                break;
+            case HOLD_ALT:
+                imgsurface->w += deltax;
+                imgsurface->h += deltay;
+                break;
 
-            int deltax = (int)(cursorpos.x - temp.x);
-            int deltay = (int)(cursorpos.y - temp.y);
-
-            int winx, winy;
-            SDL_GetWindowSize(window, &winx, &winy);
-            SDL_SetWindowSize(window, winx + deltax, winy + deltay);
-            UpdateImage();
-        }
-
+            default:
+                break;
+            }
+        
+        UpdateImage();
         SDL_Delay(10);
     }
     SDL_FreeSurface(surface);

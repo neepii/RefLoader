@@ -6,11 +6,16 @@
 #define EXIT_QUIT 0
 #define EXIT_IMAGEPATH_SYSTEM 1
 #define EXIT_IMAGEPATH_URL 2
-#define MAX_TEXT_LEN 2048
+#define MAX_TEXT_LEN 512
+
+extern char** dests;
+extern int destLen;
 
 bool CH_InitSDL(void);
-int CH_CreateMenu(char* );
+int CH_CreateMenu(void);
 void CH_Quit(void);
+void freeDests(void);
+void allocDests(int count);
 HWND getHWND(SDL_Window* );
 
 

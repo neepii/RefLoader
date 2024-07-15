@@ -6,19 +6,27 @@
 
 int main(int argc, char** argv) {
 
-    char * Destination = (char*) malloc(sizeof(char) * 200);
     if (argc > 1) {
-        strncpy(Destination, argv[1], strlen(argv[1]));
+        strncpy(dests[0], argv[1], strlen(argv[1]));
     } else {
         CH_InitSDL();
-        int exit_code = CH_CreateMenu(Destination);
+        int exit_code = CH_CreateMenu();
         if (exit_code == EXIT_IMAGEPATH_URL) {
-            DownloadImage(Destination);
-            strncpy(Destination,"res/lastimage.png",18);
+            DownloadImage(dests[0]);
+            strncpy(dests[0],"res/lastimage.png",18);
+        }
+        else if (exit_code == EXIT_QUIT) {
+            freeDests();
+            CH_Quit();
+            return 0;
         }
     }
-    CH_InitImage(Destination);
-    free(Destination);
+    if (destLen ==1 ) {
+        CH_InitImage(dests[0]);
+    }
+    else {};
+    
+    freeDests();
     CH_Quit();
 
     return 0;

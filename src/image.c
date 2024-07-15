@@ -20,6 +20,12 @@ static int wH;
 POINT cursorpos;
 
 
+
+static void ChangeCursor(LPCSTR cursorname)  {
+    SetCursor(LoadCursor(NULL, cursorname));
+}
+
+
 static void UpdateImage() {
     SDL_SetRenderDrawColor(render,219,233,244,255);
     SDL_RenderClear(render);
@@ -124,18 +130,19 @@ void CH_InitImage(char * path) {
             // case SDL_SYSWMEVENT:
             //     break;
             case SDL_KEYDOWN:
-                if (eve.key.keysym.sym == SDLK_q && KMOD_CTRL) {
+                if (eve.key.keysym.sym == SDLK_q && eve.key.keysym.mod & KMOD_CTRL) {
                     loop = false;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 GetCursorPos(&cursorpos);
-
                 if (cursorpos.x > (winrect.right-dragSide) &&
                     cursorpos.y > (winrect.bottom-dragSide)) {
                     sizing = true;
+                    ChangeCursor(IDC_SIZENWSE);
                 } else if (eve.button.button == SDL_BUTTON_RIGHT) {
                     holding = true;
+                    ChangeCursor(IDC_SIZEALL);
                 }
                 break;
             case SDL_MOUSEBUTTONUP:

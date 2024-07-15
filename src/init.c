@@ -129,9 +129,10 @@ void CH_Quit() {
 
 int CH_CreateMenu(char* inpDest) {
 
-    HWND hwnd = getHWND(mwindow);
+    // HWND hwnd = getHWND(mwindow);
 
     inpLen = 0;
+    int inpShift = 0;
     int cursorX = inpLen;
     mwindow = SDL_CreateWindow("Ref", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
     mrender = SDL_CreateRenderer(mwindow, -1,SDL_RENDERER_SOFTWARE);
@@ -153,8 +154,8 @@ int CH_CreateMenu(char* inpDest) {
     SDL_Texture * inpTexture= SDL_CreateTextureFromSurface(mrender, msurface);
     inpRect.x = textbox.x;         
     inpRect.y = textbox.y;
-    inpRect.w = textbox.w;
-    inpRect.h = textbox.h;
+    inpRect.w = 0;
+    inpRect.h = 0;
     SDL_Rect cursorrect;
     font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 20);
     if (font == NULL) {
@@ -313,7 +314,7 @@ int CH_CreateMenu(char* inpDest) {
                                 cursorX = pathLen;
                                 UpdatePrefix(0,inpLen, inputtext);
                                 inpFlag = true;
-                                // done = true;
+                                done = true;
                             }
                         }
                         
@@ -326,22 +327,39 @@ int CH_CreateMenu(char* inpDest) {
 
         if (inpFlag) {
             if (done) {
+                strcpy(inpDest, inputtext);
                 loop = false;
             } else {
             update();
             SDL_Surface * inpSurf = TTF_RenderText_Blended(font, inputtext, black);
             inpTexture = SDL_CreateTextureFromSurface(mrender,inpSurf);
+
+            SDL_Rect hiderect = {0,0,30,480};
+            SDL_SetRenderDrawColor(mrender, 255,255,255,255);
+
+            int delta;
             if (frombackspace && inpSurf == 0x0) {
                 inpRect.w = 0; inpRect.h = 0;
+                delta = 0;
             } else {
+                delta = inpSurf->w - inpRect.w;
                 inpRect.w = inpSurf->w; inpRect.h = inpSurf->h;
             }
 
-            cursorrect.x = inpPrefixLen[cursorX]+30; cursorrect.y = textbox.y + cursorpadding;
+            if (inpRect.w > textbox.w) {
+                inpRect.x -= delta;
+                inpShift += delta;
+            } else {
+                inpRect.x = textbox.x;
+                inpShift = 0;
+            }
+
+            cursorrect.x = inpPrefixLen[cursorX]+30-inpShift; cursorrect.y = textbox.y + cursorpadding;
             cursorrect.w = 1; cursorrect.h = textbox.h - (2 * cursorpadding);
             SDL_FillRect(msurface, &cursorrect, SDL_MapRGB(msurface->format, 150, 150,150));
-
             SDL_RenderCopy(mrender, inpTexture, NULL, &inpRect);
+
+            SDL_RenderFillRect(mrender, &hiderect);
 
             
             SDL_DestroyTexture(inpTexture);

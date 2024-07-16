@@ -12,15 +12,15 @@ static SDL_Renderer * render;
 static SDL_Texture * imgtexture;
 static SDL_Surface * imgsurface;
 static SDL_Surface * surface;
+SDL_Rect rect;
+
+double imgRatio;
 
 int dragSide = 35;
-static int wW;
-static int wH;
-
 POINT cursorpos;   
 
 
-typedef enum {
+typedef enum IMGSTATE{
     NO,
     HOLD_WIN,
     HOLD_NW,
@@ -45,9 +45,9 @@ static void UpdateImage() {
     SDL_GetWindowSize(window, &w, &h);
     SDL_Rect winrect = {0, 0, w, h};
 
-    SDL_Rect rect;
-    rect.h = imgsurface->h;
-    rect.w = imgsurface->w;
+    // SDL_Rect rect;
+    // rect.h = imgsurface->h;
+    // rect.w = imgsurface->w;
     rect.x = (winrect.w/2) - (rect.w/2);
     rect.y = (winrect.h/2) - (rect.h/2);
     imgtexture = SDL_CreateTextureFromSurface(render, imgsurface);
@@ -67,7 +67,7 @@ static void UpdateImage() {
 }
 
 static bool init() {
-    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, wW, wH, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, imgsurface->w, imgsurface->h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
     
     if (window == NULL) {
         fprintf(stderr, "ERROR: Window is NULL. %s\n", SDL_GetError());
@@ -103,8 +103,7 @@ static bool load(char * path) {
         return false;
     }
 
-    wW = imgsurface->w;
-    wH = imgsurface->h;
+    imgRatio = (double)imgsurface->w / (double)imgsurface->h;
 
     return true;
 }
@@ -127,6 +126,8 @@ void CH_InitImage(char * path) {
     
     imgstate st;
     RECT winrect;
+    rect.h = imgsurface->h;
+    rect.w = imgsurface->w;
     bool loop = true;                          
 
     while(loop) {
@@ -144,6 +145,11 @@ void CH_InitImage(char * path) {
             case SDL_KEYDOWN:
                 if (eve.key.keysym.sym == SDLK_q && eve.key.keysym.mod & KMOD_CTRL) {
                     loop = false;
+                }
+                else if (eve.key.keysym.sym == SDLK_r && eve.key.keysym.mod & KMOD_CTRL) {
+                    load(path);
+                    rect.h = imgsurface->h;
+                    rect.w = imgsurface->w;     
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
@@ -168,10 +174,10 @@ void CH_InitImage(char * path) {
                     st = HOLD_NW;
                     ChangeCursor(IDC_SIZENWSE);
                 }
-                else if((eve.key.keysym.mod & KMOD_ALT) &&
+                else if((eve.key.keysym.mod & KMOD_LALT) &&
                         (eve.button.button == SDL_BUTTON_LEFT)) {
                     st = HOLD_ALT;
-                    ChangeCursor(IDC_SIZENWSE);
+                    ChangeCursor(IDC_SIZEWE);
                 }
                 else if (eve.button.button == SDL_BUTTON_RIGHT) {
                     st = HOLD_WIN;
@@ -220,8 +226,10 @@ void CH_InitImage(char * path) {
                 SDL_SetWindowSize(window, winw - deltax, winh - deltay);
                 break;
             case HOLD_ALT:
-                imgsurface->w += deltax;
-                imgsurface->h += deltay;
+                int newheight = deltax + rect.h;
+                int newwidth = floor((double)newheight * imgRatio);
+                rect.w = newwidth;
+                rect.h = newheight;
                 break;
 
             default:

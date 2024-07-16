@@ -7,6 +7,7 @@
 #define EXIT_IMAGEPATH_SYSTEM 1
 #define EXIT_IMAGEPATH_URL 2
 #define MAX_TEXT_LEN 512
+#define MAX(a,b) (a > b) ? a : b
 
 extern char** dests;
 extern int destLen;

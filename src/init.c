@@ -24,7 +24,8 @@ static TTF_Font * font;
 
 
 static SDL_Rect textbox = {30,420,580,25};
-static SDL_Rect buttondialog = {133,15,374,374};
+static SDL_Rect buttondialog = {133,30,374,374};
+static SDL_Rect bar = {0,0,640,30};
 static const int mwW = 640;
 static const int mwH = 480;
 
@@ -32,6 +33,7 @@ int inpPrefixLen[MAX_TEXT_LEN+1];
 bool inpFlag;
 int inpLen;
 static const int cursorpadding = 3;
+bool dialogpressed = false;
 
 int exit_code = 0;
 
@@ -57,6 +59,12 @@ void allocDests(int count) {
     }
 }
 
+bool EnteredRect(int * x, int * y, SDL_Rect * rect) {
+    return (*x >= rect->x &&
+            *y >= rect->y &&
+            *x <= (rect->w +rect->x) &&
+            *y <= (rect->h + rect->y)) ? true : false;
+}
 
 HWND getHWND(SDL_Window * window) {
     SDL_SysWMinfo wminfo;
@@ -120,13 +128,15 @@ bool CH_InitSDL() {
 };
 
 static void update(void) {
-    SDL_Rect Rects[2] = {textbox, buttondialog};
+    SDL_Rect Rects[3] = {textbox, bar};
 
     SDL_SetRenderDrawColor(mrender, 255, 255, 255, 255);
     SDL_RenderClear(mrender);
 
     SDL_SetRenderDrawColor(mrender, 205,205,205,255);
     SDL_RenderDrawRects(mrender,Rects, 2);
+    (dialogpressed) ? SDL_SetRenderDrawColor(mrender, 205,205,205,255) : SDL_SetRenderDrawColor(mrender, 255, 255, 255, 255);
+    SDL_RenderDrawRect(mrender, &buttondialog);
 
 
     foldertex = SDL_CreateTextureFromSurface(mrender, foldersrf);
@@ -153,7 +163,7 @@ int CH_CreateMenu(void) {
     inpLen = 0;
     int inpShift = 0;
     int cursorX = inpLen;
-    mwindow = SDL_CreateWindow("Ref", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL);
+    mwindow = SDL_CreateWindow("Ref", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mwW, mwH, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS);
     mrender = SDL_CreateRenderer(mwindow, -1,SDL_RENDERER_SOFTWARE);
     mtexture = SDL_CreateTextureFromSurface(mrender, msurface);
     if (mwindow == NULL) {
@@ -190,7 +200,10 @@ int CH_CreateMenu(void) {
     SDL_StartTextInput();
     bool done = false;
     bool loop = true;
+    bool holding = false;
     bool frombackspace = false;
+    int x,y;
+    POINT cursorpos;
 
 
     while(loop) {
@@ -198,6 +211,7 @@ int CH_CreateMenu(void) {
         inpFlag = false;
 
         while(SDL_PollEvent(&eve)) {
+
             switch (eve.type)
             {
             case SDL_QUIT:
@@ -301,15 +315,18 @@ int CH_CreateMenu(void) {
                     }
                 break;
             case SDL_MOUSEBUTTONDOWN:
+                dialogpressed = true;
+                GetCursorPos(&cursorpos);
+                if (EnteredRect(&x,&y,&bar)) {
+                    holding = true;
+                }          
+                
 
                 break;
             case SDL_MOUSEBUTTONUP:
-                int x,y;
-                SDL_GetMouseState(&x,&y);
-                if (x >= buttondialog.x &&
-                    y >= buttondialog.y &&
-                    x <= (buttondialog.w +buttondialog.x) &&
-                    y <= (buttondialog.h + buttondialog.y)) {
+                holding = false;
+                dialogpressed = false;
+                if (EnteredRect(&x,&y,&buttondialog)) {
                         OPENFILENAME dialog; 
                         CHAR szfile[100];
                         ZeroMemory(&dialog, sizeof(dialog));
@@ -366,9 +383,22 @@ int CH_CreateMenu(void) {
                 break;
             }
         }
+        POINT temp = cursorpos;
+        GetCursorPos(&cursorpos);
+
+        int deltax = (int)(cursorpos.x - temp.x);
+        int deltay = (int)(cursorpos.y - temp.y);
+
+        int winx, winy;
+        SDL_GetWindowPosition(mwindow, &winx, &winy); // make it a function
+
 
         if (inpFlag && done) {
             loop = false;
+        }
+        else if (holding) {
+            printf("%d %d\n", deltax,deltay);
+            SetWindowPos(getHWND(mwindow), 0, deltax + winx, deltay + winy, 0,0,SWP_NOSIZE | SWP_NOZORDER);
         }
         else if (inpFlag) {
             update();

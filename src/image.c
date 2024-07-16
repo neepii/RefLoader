@@ -11,8 +11,14 @@ static SDL_Window * window;
 static SDL_Renderer * render;
 static SDL_Texture * imgtexture;
 static SDL_Surface * imgsurface;
+static SDL_Texture * cornertex;
 static SDL_Surface * surface;
+static SDL_Surface * cornersur;
 SDL_Rect rect;
+SDL_Rect dragRect0;
+SDL_Rect dragRect1;
+SDL_Rect dragRect2;
+SDL_Rect dragRect3;
 
 double imgRatio;
 
@@ -27,16 +33,34 @@ typedef enum IMGSTATE{
     HOLD_NE,
     HOLD_SW,
     HOLD_SE,
-    HOLD_ALT
+    HOLD_ALT_WIN,
+    HOLD_ALT_IMG
 } imgstate;
 
+typedef struct color {
+    Uint8 r;
+    Uint8 g;
+    Uint8 b;
+    Uint8 a;
+} color;
+
+color imgBackground;
+
+
+static void ReadINI() {
+    imgBackground.r = GetPrivateProfileInt("imgBackground", "r", 255, "refcfg.ini");
+    imgBackground.g = GetPrivateProfileInt("imgBackground", "g", 255, "refcfg.ini");
+    imgBackground.b = GetPrivateProfileInt("imgBackground", "b", 255, "refcfg.ini");
+    imgBackground.a = GetPrivateProfileInt("imgBackground", "a", 255, "refcfg.ini");
+}
 
 static void ChangeCursor(LPCSTR cursorname)  {
     SetCursor(LoadCursor(NULL, cursorname));
 }
 
 static void UpdateImage() {
-    SDL_SetRenderDrawColor(render,219,233,244,255);
+    
+    SDL_SetRenderDrawColor(render,imgBackground.r,imgBackground.g,imgBackground.b,imgBackground.a);
     SDL_RenderClear(render);
 
     SDL_UpdateWindowSurface(window);
@@ -53,14 +77,19 @@ static void UpdateImage() {
     imgtexture = SDL_CreateTextureFromSurface(render, imgsurface);
     SDL_RenderCopy(render, imgtexture, NULL, &rect);
 
-
     SDL_SetRenderDrawColor(render,255,255,255,255);
-    SDL_Rect dragRect0 ={0,0, dragSide, dragSide};
+    SDL_QueryTexture(cornertex, NULL,NULL, &w,&h);
+    SDL_Rect dragRect0 ={0,0, w, h};
     SDL_Rect dragRect1 ={winrect.w-dragSide, 0, dragSide, dragSide};
     SDL_Rect dragRect2 ={0, winrect.h - dragSide, dragSide, dragSide};
     SDL_Rect dragRect3={winrect.w - dragSide,winrect.h-dragSide,dragSide, dragSide};
-    SDL_Rect dragRects[4]={dragRect0,dragRect1,dragRect2,dragRect3};
-    SDL_RenderFillRects(render,dragRects,4);
+    SDL_Rect * dragRects[4]={&dragRect1,&dragRect0,&dragRect2,&dragRect3};
+
+    cornertex = SDL_CreateTextureFromSurface(render, cornersur);
+    for (int i = 0; i < 4; i++)
+    {
+        SDL_RenderCopyEx(render, cornertex, NULL, dragRects[i], 270.0 * (i+1), NULL, SDL_FLIP_NONE);
+    }
 
     SDL_DestroyTexture(imgtexture);    
     SDL_RenderPresent(render);
@@ -69,6 +98,7 @@ static void UpdateImage() {
 static bool init() {
     window = SDL_CreateWindow("image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, imgsurface->w, imgsurface->h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
     
+    ReadINI();
     if (window == NULL) {
         fprintf(stderr, "ERROR: Window is NULL. %s\n", SDL_GetError());
         return false;
@@ -91,11 +121,16 @@ static bool init() {
 static bool load(char * path) {
     imgsurface = IMG_Load(path);
     if (imgsurface == NULL) {
-        imgsurface = IMG_Load("res/cross.png"); // default
+        imgsurface = IMG_Load("D:\\proj\\refloader\\res\\cross.png"); // default
+        if (!imgsurface) {
+            fprintf(stderr, "ERROR:%s", IMG_GetError());
+            return false;
+        }
     }
-    if (!imgsurface) {
-        fprintf(stderr, "ERROR:%s", IMG_GetError());
-        return false;
+    cornersur = IMG_Load("D:\\proj\\refloader\\res\\corner.png");
+    if (!cornersur) {
+            fprintf(stderr, "ERROR:%s", IMG_GetError());
+            return false;
     }
     imgsurface = SDL_ConvertSurfaceFormat(imgsurface,SDL_PIXELFORMAT_ARGB8888, 0);
     if (!imgsurface) {
@@ -126,6 +161,7 @@ void CH_InitImage(char * path) {
     
     imgstate st;
     RECT winrect;
+
     rect.h = imgsurface->h;
     rect.w = imgsurface->w;
     bool loop = true;                          
@@ -149,7 +185,8 @@ void CH_InitImage(char * path) {
                 else if (eve.key.keysym.sym == SDLK_r && eve.key.keysym.mod & KMOD_CTRL) {
                     load(path);
                     rect.h = imgsurface->h;
-                    rect.w = imgsurface->w;     
+                    rect.w = imgsurface->w;
+                    SDL_SetWindowSize(window, rect.w, rect.h);       
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
@@ -174,14 +211,19 @@ void CH_InitImage(char * path) {
                     st = HOLD_NW;
                     ChangeCursor(IDC_SIZENWSE);
                 }
-                else if((eve.key.keysym.mod & KMOD_LALT) &&
+                else if((SDL_GetModState()& KMOD_ALT) &&
                         (eve.button.button == SDL_BUTTON_LEFT)) {
-                    st = HOLD_ALT;
+                    st = HOLD_ALT_WIN;
                     ChangeCursor(IDC_SIZEWE);
                 }
                 else if (eve.button.button == SDL_BUTTON_RIGHT) {
-                    st = HOLD_WIN;
                     ChangeCursor(IDC_SIZEALL);
+                    if (SDL_GetModState() & KMOD_ALT) {
+                        st = HOLD_ALT_IMG;
+                    }
+                    else {
+                        st = HOLD_WIN;
+                    }
                 }
                 
                 break;
@@ -225,11 +267,11 @@ void CH_InitImage(char * path) {
                 SDL_SetWindowPosition(window, winx+deltax, winy + deltay);
                 SDL_SetWindowSize(window, winw - deltax, winh - deltay);
                 break;
-            case HOLD_ALT:
-                int newheight = deltax + rect.h;
-                int newwidth = floor((double)newheight * imgRatio);
-                rect.w = newwidth;
-                rect.h = newheight;
+            case HOLD_ALT_WIN:
+                rect.h = deltax + rect.h;
+                rect.w = floor((double)rect.h * imgRatio);
+                break;
+            case HOLD_ALT_IMG:
                 break;
 
             default:
@@ -240,6 +282,7 @@ void CH_InitImage(char * path) {
         SDL_Delay(10);
     }
     SDL_FreeSurface(surface);
+    SDL_DestroyTexture(cornertex);
     SDL_DestroyRenderer(render);
     SDL_DestroyWindow(window);
 }

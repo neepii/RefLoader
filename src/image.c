@@ -161,7 +161,7 @@ void CH_InitImage(char * path) {
     };
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
     
-    imgstate st;
+    imgstate st = NO;
     RECT winrect;
 
     rect.h = imgsurface->h;

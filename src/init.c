@@ -302,8 +302,8 @@ int CH_CreateMenu(void) {
 
                     case SDLK_RETURN:
                         if (*inputtext == '"' && inputtext[inpLen-1] == '"') {
-                            memmove(inputtext, inputtext+1, strlen(inputtext)-2);
-                            inputtext[strlen(inputtext)-2 ]= '\0';
+                            memmove(inputtext, inputtext+1, inpLen-2);
+                            inputtext[inpLen-2 ]= '\0';
                         }
                         if (isHTTPS(inputtext)) {
                             exit_code = EXIT_IMAGEPATH_URL;

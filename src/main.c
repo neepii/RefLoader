@@ -7,7 +7,13 @@
 int main(int argc, char** argv) {
 
     if (argc > 1) {
-        strncpy(dests[0], argv[1], strlen(argv[1]));
+        char * text = argv[1];
+        allocDests(1);
+        if (*text == '"' && text[strlen(text)-1] == '"') {
+            memmove(text, text+1, strlen(text)-2);
+            text[strlen(text)-2 ]= '\0';
+        }
+        strncpy(dests[0], text, strlen(text));
     } else {
         CH_InitSDL();
         int exit_code = CH_CreateMenu();

@@ -5,3 +5,12 @@ imgFolder RCDATA "D:/proj/refloader/res/folder.bmp"
 fontres FONT "C:/Windows/Fonts/Arial.ttf"
 cornerres RCDATA "D:/proj/refloader/res/corner.bmp"
 crossres RCDATA "D:/proj/refloader/res/cross.bmp"
+
+STRINGTABLE
+BEGIN
+    1106 "[imgBackground]"
+    1107 "r=200"
+    1108 "g=200"
+    1109 "b=200"
+    1110 "a=255"
+END

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <winuser.h>
+#include <shlobj.h>
 
 #include "curl.h"
 #include "resource.h"
@@ -49,6 +50,38 @@ void freeDests() {
     }
     free(dests);
 }
+
+void GetCfgPath(wchar_t ** path) {
+    SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, path);
+    *path = wcscat(*path, L"\\RefLoader");
+}
+
+static void SetUpCfgFile() {
+    wchar_t * path;
+    GetCfgPath(&path);
+    DWORD dirattr = GetFileAttributesW(path);
+    if (dirattr == INVALID_FILE_ATTRIBUTES) {
+        CreateDirectoryW(path, 0);
+    }
+    path = wcscat(path, L"\\refcfg.ini");
+    DWORD cfgattr = GetFileAttributesW(path);
+    if (cfgattr == INVALID_FILE_ATTRIBUTES) {
+        int count = cfgEnd - cfgStart;
+        FILE * f = _wfopen(path, L"w");
+        for (int i = 0; i <= count; i++)
+        {
+            char line[100];
+            LoadStringA(GetModuleHandle(NULL),cfgStart+i, line, 100);
+            int len = strlen(line);
+            line[len] = '\0';
+            fprintf(f,"\n");
+            fwrite(line, sizeof(char),len,f);
+        }
+        fclose(f);
+    }
+
+}
+
 
 void allocDests(int count) {
     destLen = count;
@@ -145,6 +178,8 @@ static void UpdatePrefix(int start, int end, char * inputtext) {
 
 
 bool CH_InitSDL() {
+
+    SetUpCfgFile();
     
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "ERROR: Init Failed: %s\n", SDL_GetError());

@@ -5,5 +5,7 @@
 #define fontres 1003
 #define cornerres 1004
 #define crossres 1005
+#define cfgStart 1106
+#define cfgEnd 1110
 
 #endif

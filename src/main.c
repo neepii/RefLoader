@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
             return 0;
         }
     }
-    if (destLen ==1 ) {
+    if (destLen ==1) {
         CH_InitImage(dests[0]);
     }
     else {};

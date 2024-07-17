@@ -19,6 +19,7 @@ void freeDests(void);
 void allocDests(int count);
 HWND getHWND(SDL_Window* );
 SDL_Surface * LoadIMGFromRC(int);
+void GetCfgPath(wchar_t ** path);
 
 
 #endif

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <stdbool.h>
+#include "init.h"
 
 
 
@@ -20,7 +21,11 @@ bool DownloadImage(char* path) {
     CURL* curl;
     CURLcode res;
     FILE * fp;
-    fp = fopen("D:\\proj\\refloader\\res\\lastimage.png", "wb");
+    wchar_t * wpath;
+    GetCfgPath(&wpath);
+    wcscat(wpath, L"\\lastimage.png");
+
+    fp = _wfopen(wpath, L"wb");
     if (fp == NULL) {
         fprintf(stderr, "ERROR: Cant open file");
         return false;

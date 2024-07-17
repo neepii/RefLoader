@@ -1,0 +1,7 @@
+#include "resource.h"
+
+icon ICON "res/5050.ico"
+imgFolder RCDATA "D:/proj/refloader/res/folder.bmp"
+fontres FONT "C:/Windows/Fonts/Arial.ttf"
+cornerres RCDATA "D:/proj/refloader/res/corner.bmp"
+crossres RCDATA "D:/proj/refloader/res/cross.bmp"

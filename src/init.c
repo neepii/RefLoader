@@ -8,8 +8,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <winuser.h>
 
 #include "curl.h"
+#include "resource.h"
 #include "init.h"
 
 
@@ -65,6 +67,43 @@ bool EnteredRect(int * x, int * y, SDL_Rect * rect) {
             *y <= (rect->h + rect->y)) ? true : false;
 }
 
+static void GetDataFromRC(HGLOBAL * data, DWORD * size, LPCSTR type, int resource) {
+
+    HMODULE hModule = GetModuleHandle(NULL);
+    HRSRC hResInfo = FindResource(hModule, MAKEINTRESOURCE(resource), type);
+    if (!hResInfo) {
+        fprintf(stderr, "ERROR: %ld\n", GetLastError());
+    }
+    *data = LoadResource(hModule, hResInfo);
+    if (!hResInfo) {
+        fprintf(stderr, "ERROR: %ld\n", GetLastError());
+    }
+    *data = LockResource(*data);
+    *size = SizeofResource(hModule, hResInfo);
+}
+
+SDL_Surface * LoadIMGFromRC(int resource) {
+    HGLOBAL data;
+    DWORD size;
+    GetDataFromRC(&data, &size, RT_RCDATA, resource);
+
+    SDL_RWops *rwops = SDL_RWFromMem(data, size);
+    SDL_Surface *surface = SDL_LoadBMP_RW(rwops, SDL_TRUE);
+
+    return surface;
+}
+
+static TTF_Font * LoadTTFFromRC(int resource) {
+    HGLOBAL data;
+    DWORD size;
+    GetDataFromRC(&data, &size, RT_FONT, resource);
+
+    SDL_RWops *rwops = SDL_RWFromMem(data,size);
+    TTF_Font *font = TTF_OpenFontRW(rwops, 1, 20);
+
+    return font;
+}
+
 HWND getHWND(SDL_Window * window) {
     SDL_SysWMinfo wminfo;
     SDL_VERSION(&wminfo.version);
@@ -106,6 +145,7 @@ static void UpdatePrefix(int start, int end, char * inputtext) {
 
 
 bool CH_InitSDL() {
+    
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "ERROR: Init Failed: %s\n", SDL_GetError());
         return EXIT_FAILURE;
@@ -172,7 +212,11 @@ int CH_CreateMenu(void) {
     };
     msurface = SDL_GetWindowSurface(mwindow);
 
-    SDL_Surface * tempsrf = IMG_Load("res/folder.png");
+
+    SDL_Surface * tempsrf = LoadIMGFromRC(imgFolder);
+    if (!tempsrf) {
+        fprintf(stderr, "ERROR: Cant load from .res: %s",SDL_GetError());
+    }
     foldersrf = SDL_ConvertSurface(tempsrf, msurface->format, 0);
     SDL_FreeSurface(tempsrf);
 
@@ -186,7 +230,7 @@ int CH_CreateMenu(void) {
     inpRect.w = 0;
     inpRect.h = 0;
     SDL_Rect cursorrect;
-    font = TTF_OpenFont("C:\\Windows\\Fonts\\Arial.ttf", 20);
+    font = LoadTTFFromRC(fontres);
     if (font == NULL) {
         fprintf(stderr, "ERROR: %s\n", SDL_GetError());
         return EXIT_FAILURE;

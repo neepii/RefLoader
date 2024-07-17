@@ -18,6 +18,7 @@ void CH_Quit(void);
 void freeDests(void);
 void allocDests(int count);
 HWND getHWND(SDL_Window* );
+SDL_Surface * LoadIMGFromRC(int);
 
 
 #endif

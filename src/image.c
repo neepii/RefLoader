@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#include "resource.h"
 #include "init.h"
 #define HOTKEY1 1110
 
@@ -121,13 +123,13 @@ static bool init() {
 static bool load(char * path) {
     imgsurface = IMG_Load(path);
     if (imgsurface == NULL) {
-        imgsurface = IMG_Load("D:\\proj\\refloader\\res\\cross.png"); // default
+        imgsurface = LoadIMGFromRC(crossres); // default
         if (!imgsurface) {
             fprintf(stderr, "ERROR:%s", IMG_GetError());
             return false;
         }
     }
-    cornersur = IMG_Load("D:\\proj\\refloader\\res\\corner.png");
+    cornersur = LoadIMGFromRC(cornerres);
     if (!cornersur) {
             fprintf(stderr, "ERROR:%s", IMG_GetError());
             return false;

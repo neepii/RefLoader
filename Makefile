@@ -8,11 +8,16 @@ EXEC_NAME := exec
 
 all: $(EXEC_NAME)
 
-$(EXEC_NAME): $(OBJ)
-	gcc $(FLAGS) -o $@ $^ $(LIB)
+$(EXEC_NAME): $(OBJ) resource.res
+	gcc $(FLAGS) -o $@  $^ $(LIB)
 
 %.o: src/%.c
 	gcc $(FLAGS) -c $^ $(LIB)
+
+
+# resource files that will be embed into executable
+resource.res: src/resource.rc 
+	windres $^ -O coff -o $@
 
 clean:
 	rm -rf $(OBJ) $(EXEC_NAME)

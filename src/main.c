@@ -19,18 +19,20 @@ int main(int argc, char** argv) {
         int exit_code = CH_CreateMenu();
         if (exit_code == EXIT_IMAGEPATH_URL) {
             DownloadImage(dests[0]);
-            strncpy(dests[0],"res/lastimage.png",18);
+            char path[100];
+            getPath(path,100);
+            strncat(path,"\\lastimage.png",16);
+            memset(dests[0], 0, MAX_TEXT_LEN);
+            strncpy(dests[0],path,strlen(path));
         }
         else if (exit_code == EXIT_QUIT) {
             freeDests();
             CH_Quit();
             return 0;
         }
-    }
-    if (destLen ==1) {
-        CH_InitImage(dests[0]);
-    }
-    else {};
+        }
+    CH_InitImage(dests[0], strlen(dests[0]));
+
     
     freeDests();
     CH_Quit();

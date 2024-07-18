@@ -19,15 +19,18 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream) {
 }
 
 bool DownloadImage(char* path) {
+    printf("DOWNLOADING\n");
     CURL* curl;
     CURLcode res;
     FILE * fp;
-    wchar_t * wpath = L"D:\\proj\\refloader\\res\\lastimage.png";
+    char li_path[100];
+    getPath(li_path,100);
+    strncat(li_path, "\\lastimage.png\0",16);
     // SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &wpath);
     // wpath = wcscat(wpath, L"\\RefLoader\\lastimage.png");
 
 
-    fp = _wfopen(wpath, L"wb");
+    fp = fopen(li_path, "wb");
     if (fp == NULL) {
         fprintf(stderr, "ERROR: Cant open file");
         return false;
@@ -52,5 +55,6 @@ bool DownloadImage(char* path) {
 
     curl_easy_cleanup(curl);
     fclose(fp);
+    printf("DONE\n");
     return true;
 }

@@ -53,6 +53,41 @@ void freeDests() {
     free(dests);
 }
 
+static void SetUpCfgFile() {
+    char path[150];
+    int len = getPath(path,150);
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
+        CreateDirectory(path, 0);
+    }
+    strncat(path, "\\refcfg.ini", len);
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
+        int count = cfgEnd - cfgStart + 1;
+        FILE * f = fopen(path, "w");
+        for (int i = 0; i < count; i++)
+        {
+            char line[100];
+            LoadStringA(GetModuleHandle(NULL),cfgStart+i, line, 100);
+            int len = strlen(line);
+            line[len] = '\0';
+            fwrite(line, sizeof(char),len,f);
+            fprintf(f,"\n");
+        }
+        fclose(f);
+    }
+}
+
+
+size_t getPath(char * path, size_t size) {
+    wchar_t * wpath;
+    SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &wpath);
+    // char path[100];
+    size_t i;
+    size_t len = SDL_wcslen(wpath) + 11;
+    wcstombs_s(&i, path, size, wpath, len);
+    strncat(path, "\\RefLoader", i);
+    return i;
+}
+
 
 
 void allocDests(int count) {
@@ -61,7 +96,7 @@ void allocDests(int count) {
     for (int i = 0; i < destLen; i++)
     {
         dests[i] = (char*) malloc(sizeof(char)*MAX_TEXT_LEN);
-        memset(dests[i], 0, MAX_TEXT_LEN);
+        memset(dests[i], '\0', MAX_TEXT_LEN);
     }
 }
 
@@ -150,6 +185,8 @@ static void UpdatePrefix(int start, int end, char * inputtext) {
 
 
 bool CH_InitSDL() {
+
+    SetUpCfgFile();
     
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "ERROR: Init Failed: %s\n", SDL_GetError());
@@ -201,9 +238,8 @@ void CH_Quit() {
 
 
 
-int CH_CreateMenu(void) {
 
-    // HWND hwnd = getHWND(mwindow);
+int CH_CreateMenu(void) {
 
     inpLen = 0;
     int inpShift = 0;
@@ -329,6 +365,9 @@ int CH_CreateMenu(void) {
                     case SDLK_v:
                         if(eve.key.keysym.mod & KMOD_CTRL) {
                             char cliptext[MAX_TEXT_LEN];
+                            if (strlen(SDL_GetClipboardText()) > MAX_TEXT_LEN) {
+                                break;
+                            }
                             strcpy(cliptext, SDL_GetClipboardText());
                             int clipLen = strlen(cliptext);
                             if ((inpLen+clipLen) < MAX_TEXT_LEN) { 

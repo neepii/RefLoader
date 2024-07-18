@@ -50,10 +50,13 @@ color imgBackground;
 
 
 static void ReadINI() {
-    imgBackground.r = GetPrivateProfileInt("imgBackground", "r", 255, "refcfg.ini");
-    imgBackground.g = GetPrivateProfileInt("imgBackground", "g", 255, "refcfg.ini");
-    imgBackground.b = GetPrivateProfileInt("imgBackground", "b", 255, "refcfg.ini");
-    imgBackground.a = GetPrivateProfileInt("imgBackground", "a", 255, "refcfg.ini");
+    char path[150];
+    getPath(path, 150);
+    strncat(path,"\\refcfg.ini", 12);
+    imgBackground.r = GetPrivateProfileInt("imgBackground", "r", 255, path);
+    imgBackground.g = GetPrivateProfileInt("imgBackground", "g", 255, path);
+    imgBackground.b = GetPrivateProfileInt("imgBackground", "b", 255, path);
+    imgBackground.a = GetPrivateProfileInt("imgBackground", "a", 255, path);
 }
 
 static void ChangeCursor(LPCSTR cursorname)  {

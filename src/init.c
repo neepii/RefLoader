@@ -188,7 +188,7 @@ bool CH_InitSDL() {
 
     SetUpCfgFile();
     
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+    if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
         fprintf(stderr, "ERROR: Init Failed: %s\n", SDL_GetError());
         return EXIT_FAILURE;
     }

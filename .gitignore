@@ -1,6 +1,5 @@
 *.[ao]
-exec
-exec.exe
+RefLoader.exe
 TODO.*
 .vscode
 res/lastimage.png

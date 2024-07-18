@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <stdbool.h>
+#include <shlobj.h>
 #include "init.h"
 
 
@@ -21,9 +22,10 @@ bool DownloadImage(char* path) {
     CURL* curl;
     CURLcode res;
     FILE * fp;
-    wchar_t * wpath;
-    GetCfgPath(&wpath);
-    wcscat(wpath, L"\\lastimage.png");
+    wchar_t * wpath = L"D:\\proj\\refloader\\res\\lastimage.png";
+    // SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &wpath);
+    // wpath = wcscat(wpath, L"\\RefLoader\\lastimage.png");
+
 
     fp = _wfopen(wpath, L"wb");
     if (fp == NULL) {
